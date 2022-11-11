@@ -1,8 +1,6 @@
 from os.path import join
 from re import compile as recmp
-from time import time
 from simpleobject import simpleobject as so
-from babelrts import babelrts
 from utils.run_cmd import rc
 
 MVN_TESTS = recmp(r'\[INFO\] Running (.+)\n\[INFO\] Tests run: ')
@@ -33,7 +31,7 @@ def collect_java_tests(test_folder, res):
     selected_tests = tuple(join(test_folder, *name.split('.')) + '.java' for name in MVN_TESTS.findall(res[1]))
     duration = res[3]
     return so(tests=sorted(selected_tests), duration=duration)
- 
+
 def run_junit_tests(test_folder):
     res = rc(f'mvn clean test')
     return collect_java_tests(test_folder, res)
@@ -46,16 +44,6 @@ def run_ekstazi_tests(test_folder, hash=None):
     res = rc(f'mvn clean ekstazi:ekstazi')
     return collect_java_tests(test_folder, res)
 
-def run_babelrts_java_tests(src, test, all_tests):
-    if all_tests is None:
-        return None
-    t = time()
-    selected_tests, dependencies, changed, new_hashes, test_files, source_files = babelrts.rts(('java',), '.', (test,), (src,))
-    babelrts.save_jsons('.', selected_tests, dependencies, changed, new_hashes)
-    selected_tests = tuple(path for path in selected_tests if path in all_tests)
-    if selected_tests:
-        selected_classes = (file.split('/java/',1)[1].replace('/','.') for file in selected_tests)
-        rc(f'mvn test -Dtest={",".join(selected_classes)}')
-    duration = time()-t
-    return so(tests=sorted(selected_tests), duration=duration, dependencies=dependencies, changed=sorted(tuple(changed)), files=sorted(new_hashes.keys()))
-
+def run_babelrts_java_tests(selected_tests):
+    selected_classes = (file.split('/java/',1)[1].replace('/','.') for file in selected_tests)
+    rc(f'mvn test -Dtest={",".join(selected_classes)}')

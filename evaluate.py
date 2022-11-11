@@ -3,7 +3,9 @@
 from json import load
 from os.path import isdir, join
 from traceback import print_exc
-from sys import argv
+from time import time
+from sys import argv, path
+path.append('../BabelRTS')
 from simpleobject import simpleobject as so
 from withcd import cd
 from utils.run_cmd import rc
@@ -11,10 +13,13 @@ from utils.java_evaluation import run_junit_tests, run_ekstazi_tests, run_hyrts_
 from utils.python_evaluation import run_pytest_tests, run_pytestrts_tests, run_babelrts_python_tests
 from utils.javascript_evaluation import run_jest_tests, run_babelrts_javascript_tests
 from utils.save_experiment import save_experiment
+from babelrts import BabelRTS
+
+
 
 CONF_JSON = 'short.json'
 REPOS = 'repos'
-B_DIR = '.babelrts'
+BABELRTS_FILE = '.babelrts'
 
 def check_extension(name, extensions):
     if name:
@@ -54,13 +59,14 @@ def download_repos(experiment):
                 rc(f'git clone {r.git}')
             with cd(r.name):
                 r.branch = get_branch()
-                rc(f'rm -rf {B_DIR} ; git clean -fd ; git reset --hard ; git checkout {r.branch} ; git pull')
+                rc(f'rm -rf {BABELRTS_FILE} ; git clean -fd ; git reset --hard ; git checkout {r.branch} ; git pull')
                 try: rc(f'git checkout {r.starting_commit}')
                 except Exception: pass
                 r.commits = get_commits(experiment.revs, experiment.changed_files, experiment.extensions)
 
 def preprocess_repos(experiment):
-    if 'generated' not in experiment: experiment.generated = ()
+    if 'generated' not in experiment: experiment.generated = []
+    if 'exclude' not in experiment: experiment.exclude = []
     for r in experiment.repos:
         r.git = r.url + '.git'
         r.name = r.url.rsplit('/',1)[-1]
@@ -97,18 +103,19 @@ def process_repos(experiment):
     for r in experiment.repos:
         print(r.name)
         with cd(join(REPOS,r.name)):
+            babelRTS = BabelRTS('.', r.src_folder, r.test_folder, experiment.exclude, experiment.languages)
             for i, commit in enumerate(r.commits):
                 print(commit.hash)
                 init_commit(commit)
                 try:
-                    rc(f'git clean -fde {" -e ".join(experiment.generated + [B_DIR])} ; git reset --hard ; git checkout {commit.hash}')
+                    rc(f'git clean -fde {" -e ".join(experiment.generated + [BABELRTS_FILE,])} ; git reset --hard ; git checkout {commit.hash}')
                     if build: build()
                     commit.all = run_all_tests(r.test_folder)
                     commit.tools = so()
                     prev_hash = r.commits[i-1].hash if i else None
                     for tool, func in tools:
                         commit.tools[tool] = func(r.test_folder, hash=prev_hash)
-                    commit.babelrts = run_babelrts_tests(r.src_folder, r.test_folder, commit.all.tests)
+                    run_babelrts(babelRTS, r, commit, run_babelrts_tests)
                     if i:
                         commit.changed = get_changed_files(r.commits[i-1].hash, commit.hash)
                         commit.git_hash = rc('git rev-parse HEAD')[1]
@@ -120,6 +127,22 @@ def process_repos(experiment):
                 del commit.babelrts.files
         r.commits.pop(0)
         save_experiment(experiment)
+
+def run_babelrts(babelRTS, r, commit, run_babelrts_tests):
+    if commit.all.tests is None:
+        commit.babelrts = None
+    else:
+        t = time()
+        selected_tests = babelRTS.rts()
+        selected_tests = tuple(path for path in selected_tests if path in commit.all.tests)
+        if selected_tests:
+            run_babelrts_tests(selected_tests)
+        duration = time()-t
+        changed = babelRTS.get_change_discoverer().get_changed_files()
+        dependency_graph = babelRTS.get_dependency_extractor().get_dependency_graph()
+        files = babelRTS.get_change_discoverer().get_all_files()
+        dependencies = {k: tuple(v) for k, v in dependency_graph.items()}
+        commit.babelrts = so(tests=sorted(selected_tests), duration=duration, dependencies=dependencies, changed=sorted(changed), files=sorted(files))
 
 def read_conf():
     conf_json = CONF_JSON if len(argv) < 2 else argv[1]

@@ -1,8 +1,6 @@
 from re import compile as recmp
 from os.path import isfile
-from time import time
 from simpleobject import simpleobject as so
-from babelrts import babelrts
 from utils.run_cmd import rc
 
 PYTEST_TESTS = recmp(r'(\S+\.py).+\[[ 0-9]{3}%\]\n')
@@ -28,15 +26,5 @@ def run_pytestrts_tests(test_folder, hash):
         res.duration += cov[3]
     return res
 
-def run_babelrts_python_tests(src, test, all_tests):
-    if all_tests is None:
-        return None
-    t = time()
-    selected_tests, dependencies, changed, new_hashes, test_files, source_files = babelrts.rts(('python',), '.', (test,), (src,))
-    babelrts.save_jsons('.', selected_tests, dependencies, changed, new_hashes)
-    selected_tests = tuple(path for path in selected_tests if path in all_tests)
-    if selected_tests:
-        rc(f'python3.9 -m pytest {" ".join(selected_tests)}')
-    duration = time()-t
-    return so(tests=sorted(selected_tests), duration=duration, dependencies=dependencies, changed=sorted(tuple(changed)), files=sorted(new_hashes.keys()))
-
+def run_babelrts_python_tests(selected_tests):
+    rc(f'python3.9 -m pytest {" ".join(selected_tests)}')

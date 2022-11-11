@@ -4,6 +4,9 @@
     "skip":false,
     "revs":20,
     "changed_files":3,
+    "languages":[
+      "java"
+    ],
     "extensions":[
       "java"
     ],
@@ -87,6 +90,9 @@
     "skip":true,
     "revs":20,
     "changed_files":3,
+    "languages":[
+      "python"
+    ],
     "extensions":[
       "py"
     ],
@@ -144,9 +150,16 @@
     "skip":true,
     "revs":20,
     "changed_files":3,
+    "languages":[
+      "javascript",
+      "typescript"
+    ],
     "extensions":[
       "js",
       "ts"
+    ],
+    "exclude":[
+      "node_modules"
     ],
     "build":"build_javascript_project",
     "run_all_tests":"run_jest_tests",
