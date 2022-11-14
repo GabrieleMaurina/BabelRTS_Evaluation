@@ -5,7 +5,7 @@ from os.path import isdir, join
 from traceback import print_exc
 from time import time
 from sys import argv, path
-path.append('../BabelRTS')
+path.append('../../BabelRTS')
 from simpleobject import simpleobject as so
 from withcd import cd
 from utils.run_cmd import rc
@@ -17,7 +17,7 @@ from babelrts import BabelRTS
 
 
 
-CONF_JSON = 'short.json'
+CONF_JSON = 'full.json'
 REPOS = 'repos'
 BABELRTS_FILE = '.babelrts'
 
