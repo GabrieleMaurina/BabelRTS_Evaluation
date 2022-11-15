@@ -87,7 +87,7 @@
   },
   {
     "name":"Python",
-    "skip":true,
+    "skip":false,
     "revs":20,
     "changed_files":3,
     "languages":[
@@ -147,7 +147,7 @@
   },
   {
     "name":"JavaScript",
-    "skip":true,
+    "skip":false,
     "revs":20,
     "changed_files":3,
     "languages":[

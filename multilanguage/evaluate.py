@@ -96,7 +96,7 @@ def run_babelrts(subjects, languages):
         subject.reductions = []
         if ild:
             subject.ilds = []
-        babelRTS = BabelRTS(subject.path, subject.source_folder, subject.test_folder, languages)
+        babelRTS = BabelRTS(subject.path, subject.source_folder, subject.test_folder, languages=languages)
         first = True
         for sha in subject.shas:
             if rc(f'git checkout {sha}', subject.path).returncode:

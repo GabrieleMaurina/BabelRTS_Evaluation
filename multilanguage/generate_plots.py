@@ -23,7 +23,7 @@ def collect_data():
 	ilds = {}
 	for results_file in glob(join(RESULTS_FOLDER, '*_results.csv')):
 		languages = basename(results_file).split('_')[:-1]
-		name = '-'.join(language.capitalize() for language in languages)
+		name = '\n'.join(language.capitalize() for language in languages)
 		with open(results_file, 'r') as csv:
 			table = [row.split(',') for row in csv.read().split('\n') if row][1:]
 		loc[name] = tuple(int(row[2]) for row in table)
