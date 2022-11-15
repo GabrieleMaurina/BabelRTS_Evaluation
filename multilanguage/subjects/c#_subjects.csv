@@ -1,0 +1,11 @@
+https://github.com/sjdirect/abot.git,Abot.Tests.Unit,Abot
+https://github.com/davideicardi/DynamicExpresso.git,test/DynamicExpresso.UnitTest,src/DynamicExpresso.Core
+https://github.com/fclp/fluent-command-line-parser.git,FluentCommandLineParser.Tests,FluentCommandLineParser
+https://github.com/JeremySkinner/FluentValidation.git,src/FluentValidation.Tests,src/FluentValidation
+https://github.com/jsonfx/jsonfx.git,src/JsonFx.Tests,src/JsonFx
+https://github.com/morelinq/MoreLINQ.git,MoreLinq.Test,MoreLinq
+https://github.com/NancyFx/Nancy.git,test,src
+https://github.com/JamesNK/Newtonsoft.Json.git,Src/Newtonsoft.Json.Tests,Src/Newtonsoft.Json
+https://github.com/OptiKey/OptiKey.git,src/JuliusSweetland.OptiKey.UnitTests,src/JuliusSweetland.OptiKey
+https://github.com/mwrock/RequestReduce.git,RequestReduce.Facts/Handlers,RequestReduce
+https://github.com/dotnet-state-machine/stateless.git,test/Stateless.Tests,src/Stateless

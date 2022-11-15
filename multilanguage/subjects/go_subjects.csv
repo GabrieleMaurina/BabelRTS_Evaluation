@@ -1,0 +1,12 @@
+https://github.com/golang/go.git,test,src
+https://github.com/go-gorm/gorm.git,tests,
+https://github.com/influxdata/influxdb.git,testing,
+https://github.com/kubernetes/minikube.git,test,
+https://github.com/grpc/grpc-go.git,test,
+https://github.com/fyne-io/fyne.git,test,
+https://github.com/uber-go/zap.git,zaptest,
+https://github.com/google/grumpy.git,testing,
+https://github.com/gopherjs/gopherjs.git,tests,
+https://github.com/ory/hydra.git,test,
+https://github.com/rkt/rkt.git,tests,
+https://github.com/micro/micro.git,test,

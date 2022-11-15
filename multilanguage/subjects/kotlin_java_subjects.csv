@@ -1,0 +1,12 @@
+https://github.com/square/okhttp.git,okhttp/src/test,okhttp/src/main
+https://github.com/AlmasB/FXGL.git,fxgl-core/src/test,fxgl-core/src/main
+https://github.com/requery/requery.git,requery-test,
+https://github.com/tipsy/javalin.git,javalin/src/test,javalin/src/main
+https://github.com/alibaba/p3c.git,p3c-pmd/src/test,p3c-pmd/src/main
+https://github.com/square/okio.git,okio/src/jvmTest,
+https://github.com/square/wire.git,wire-tests/src,wire-library
+https://github.com/graphql-java-kickstart/graphql-java-tools.git,src/test,src/main/kotlin/graphql/kickstart/tools
+https://github.com/mattbdean/JRAW.git,lib/src/test,lib/src/main
+https://github.com/anthonycr/Lightning-Browser.git,app/src/test/java/acr/browser/lightning,app/src/main/java/acr/browser/lightning
+https://github.com/orhanobut/dialogplus.git,dialogplus/src/test/java/com/orhanobut/android/dialogplus,dialogplus/src/main/java/com/orhanobut/dialogplus
+https://github.com/sksamuel/scrimage.git,scrimage-core/src/test/kotlin/com/sksamuel/scrimage/core,src/main/java

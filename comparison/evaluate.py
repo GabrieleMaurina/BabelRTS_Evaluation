@@ -32,7 +32,7 @@ def n_changed(h1, h2, extensions):
     return sum(1 for path in rc(f'git --no-pager diff --name-only {h1} {h2}')[1].split('\n') if check_extension(path,extensions))
 
 def get_commits(revs, changed_files, extensions):
-    hashcodes = tuple(hash for hash in rc(f'git --no-pager log --first-parent --pretty=tformat:"%H"')[1].split() if hash)
+    hashcodes = tuple(hash for hash in rc('git --no-pager log --first-parent --pretty=tformat:"%H"')[1].split() if hash)
     commits = [so(hash=hashcodes[0])]
     p = 1
     for i in range(revs):
@@ -59,7 +59,7 @@ def download_repos(experiment):
                 rc(f'git clone {r.git}')
             with cd(r.name):
                 r.branch = get_branch()
-                rc(f'rm -rf {BABELRTS_FILE} ; git clean -fd ; git reset --hard ; git checkout {r.branch} ; git pull')
+                rc(f'rm {BABELRTS_FILE} ; git clean -fd ; git reset --hard ; git checkout {r.branch} ; git pull')
                 try: rc(f'git checkout {r.starting_commit}')
                 except Exception: pass
                 r.commits = get_commits(experiment.revs, experiment.changed_files, experiment.extensions)
