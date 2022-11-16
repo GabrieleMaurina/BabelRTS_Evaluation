@@ -94,6 +94,7 @@ def run_babelrts(subjects, languages):
         print(f'Subject: {subject.name}')
         subject.times = []
         subject.reductions = []
+        subject.changed = []
         if ild:
             subject.ilds = []
         babelRTS = BabelRTS(subject.path, subject.source_folder, subject.test_folder, languages=languages)
@@ -111,10 +112,12 @@ def run_babelrts(subjects, languages):
                 test_files = babelRTS.get_change_discoverer().get_test_files()
                 reduction = (1 - len(selected_tests)/len(test_files)) if test_files else 1
                 subject.reductions.append(reduction)
+                subject.changed.append(len(babelRTS.get_change_discoverer().get_changed_files()))
                 if ild:
                     subject.ilds.append(get_ild(babelRTS))
         subject.avg_time = mean(subject.times)
         subject.avg_reduction = mean(subject.reductions)
+        subject.avg_changed = mean(subject.changed)
         if ild:
         	subject.avg_ild = mean(subject.ilds)
 
@@ -124,13 +127,13 @@ def save_results(subjects, languages):
     if not isdir(RESULTS_FOLDER):
         mkdir(RESULTS_FOLDER)
     with open(join(RESULTS_FOLDER, '_'.join(languages) + '_results.csv'), 'w') as out:
-        out.write('subject,sha,loc,nfiles,reduction,time')
+        out.write('subject,sha,loc,nfiles,changed,reduction,time')
         if ild:
             out.write(',ild\n')
         else:
             out.write('\n')
         for subject in subjects:
-            out.write(f'{subject.name},{subject.shas[-1]},{subject.loc},{subject.nfiles},{subject.avg_reduction},{subject.avg_time}')
+            out.write(f'{subject.name},{subject.shas[-1]},{subject.loc},{subject.nfiles},{subject.avg_changed},{subject.avg_reduction},{subject.avg_time}')
             if ild:
                 out.write(f',{subject.avg_ild}\n')
             else:
