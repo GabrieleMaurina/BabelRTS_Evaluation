@@ -9,7 +9,7 @@ path.append('../../BabelRTS')
 from simpleobject import simpleobject as so
 from withcd import cd
 from utils.run_cmd import rc
-from utils.java_evaluation import run_junit_tests, run_ekstazi_tests, run_hyrts_tests, run_babelrts_java_tests
+from utils.java_evaluation import build_java_project, run_junit_tests, run_ekstazi_tests, run_hyrts_tests, run_babelrts_java_tests
 from utils.python_evaluation import run_pytest_tests, run_pytestrts_tests, run_babelrts_python_tests
 from utils.javascript_evaluation import run_jest_tests, run_babelrts_javascript_tests
 from utils.save_experiment import save_experiment
@@ -96,7 +96,7 @@ def init_commit(commit):
 
 def process_repos(experiment):
     print('*processing*')
-    build = globals().get(experiment.build, None) if 'build' in experiment else None
+    build = globals()[experiment.build] if 'build' in experiment else None
     run_all_tests = globals()[experiment.run_all_tests]
     tools = tuple((tool, globals()[func]) for tool, func in experiment.tools.items())
     run_babelrts_tests = globals()[experiment.run_babelrts_tests]

@@ -3,12 +3,12 @@ from re import compile as recmp
 from simpleobject import simpleobject as so
 from utils.run_cmd import rc
 
-MVN_TESTS = recmp(r'\[INFO\] Running (.+)\n\[INFO\] Tests run: ')
-RAT_CONF = recmp(r'<artifactId>apache-rat-plugin<\/artifactId>\n\s*<configuration>')
+MVN_TESTS = recmp(r'\[INFO\] Running (.+)\n\[')
+RAT_CONF = recmp(r'<artifactId>apache-rat-plugin<\/artifactId>[\s\S]*?<configuration>')
 RAT_SKIP = '<skip>true</skip>'
 HYRTS = '<plugin><groupId>org.hyrts</groupId><artifactId>hyrts-maven-plugin</artifactId><version>1.0.1</version></plugin>'
 EKSTAZI = '<plugin><groupId>org.ekstazi</groupId><artifactId>ekstazi-maven-plugin</artifactId><version>5.3.0</version><executions><execution><id>ekstazi</id><goals><goal>select</goal></goals></execution></executions></plugin>'
-PLUGINS = recmp('</pluginManagement>\s*<plugins>')
+PLUGINS = recmp('<plugins>')
 POM = 'pom.xml'
 
 def insert_string(s1, s2, pos):

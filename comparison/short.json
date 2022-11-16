@@ -2,7 +2,7 @@
   {
     "name":"Java",
     "skip":false,
-    "revs":1,
+    "revs":3,
     "changed_files":3,
     "languages":[
       "java"
@@ -18,7 +18,7 @@
     },
     "run_babelrts_tests":"run_babelrts_java_tests",
     "generated":[
-      ".hyrts",
+      "hyrts-files",
       ".ekstazi"
     ],
     "src_folder":"src/main/java",
@@ -32,8 +32,8 @@
   },
   {
     "name":"Python",
-    "skip":false,
-    "revs":1,
+    "skip":true,
+    "revs":3,
     "changed_files":3,
     "languages":[
       "python"
@@ -59,8 +59,8 @@
   },
   {
     "name":"JavaScript",
-    "skip":false,
-    "revs":1,
+    "skip":true,
+    "revs":3,
     "changed_files":3,
     "languages":[
       "javascript",

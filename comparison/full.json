@@ -18,7 +18,7 @@
     },
     "run_babelrts_tests":"run_babelrts_java_tests",
     "generated":[
-      ".hyrts",
+      "hyrts-files",
       ".ekstazi"
     ],
     "src_folder":"src/main/java",
@@ -87,7 +87,7 @@
   },
   {
     "name":"Python",
-    "skip":false,
+    "skip":true,
     "revs":20,
     "changed_files":3,
     "languages":[
@@ -147,7 +147,7 @@
   },
   {
     "name":"JavaScript",
-    "skip":false,
+    "skip":true,
     "revs":20,
     "changed_files":3,
     "languages":[
