@@ -1,3 +1,4 @@
+url,test_folder,source_folder
 https://github.com/jdereg/json-io.git,src/test,src/main/java/com/cedarsoftware/util/io
 https://github.com/OmniLayer/OmniJ.git,omnij-core/src/test/groovy/foundation/omni,omnij-core/src/main/java/foundation/omni
 https://github.com/okta/okta-jwt-verifier-java.git,impl/src/test/groovy/com/okta/jwt,impl/src/main/java/com/okta/jwt/impl

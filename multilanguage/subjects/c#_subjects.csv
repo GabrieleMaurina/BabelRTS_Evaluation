@@ -1,3 +1,4 @@
+url,test_folder,source_folder
 https://github.com/sjdirect/abot.git,Abot.Tests.Unit,Abot
 https://github.com/davideicardi/DynamicExpresso.git,test/DynamicExpresso.UnitTest,src/DynamicExpresso.Core
 https://github.com/fclp/fluent-command-line-parser.git,FluentCommandLineParser.Tests,FluentCommandLineParser

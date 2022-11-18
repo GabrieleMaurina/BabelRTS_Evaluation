@@ -1,3 +1,4 @@
+url,test_folder,source_folder
 https://github.com/elastic/logstash.git,logstash-core/spec,logstash-core
 https://github.com/jruby/jruby.git,core/src/test,core/src/main
 https://github.com/jruby/warbler.git,spec,

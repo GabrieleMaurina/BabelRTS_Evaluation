@@ -1,3 +1,4 @@
+url,test_folder,source_folder
 https://github.com/clap-rs/clap.git,tests,src
 https://github.com/rust-lang/cargo.git,tests,src
 https://github.com/sharkdp/bat.git,test,src

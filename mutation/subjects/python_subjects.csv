@@ -1,3 +1,4 @@
+url,test_folder,source_folder
 https://github.com/pyecharts/pyecharts,tests,
 https://github.com/tflearn/tflearn,tests,
 https://github.com/mementum/backtrader,tests,

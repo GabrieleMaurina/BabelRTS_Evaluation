@@ -10,6 +10,7 @@ from re import compile
 from subprocess import run
 from time import time
 from statistics import mean
+from csv import DictReader
 from simpleobject import simpleobject as so
 
 N_REV = 30
@@ -28,16 +29,17 @@ def rc(cmd, cwd):
 def init(subjects_file):
     print('***COLLECTING SUBJECTS DATA***')
     with open(subjects_file, 'r') as csv:
-        table = [row.split(',') for row in csv.read().split('\n') if row]
+        reader = DictReader(csv)
+        table = tuple(so(row) for row in reader)
     subjects = []
     for row in table:
         subject = so()
         subjects.append(subject)
-        subject.url = row[0]
+        subject.url = row.url
         subject.name = SUBJECT_NAME.search(subject.url)[1]
         subject.path = join(REPOS_FOLDER, subject.name)
-        subject.test_folder = row[1]
-        subject.source_folder = row[2]
+        subject.test_folder = row.test_folder
+        subject.source_folder = row.source_folder
         print(subject)
     return subjects
 

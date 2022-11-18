@@ -1,3 +1,4 @@
+url,test_folder,source_folder
 https://github.com/square/okhttp.git,okhttp/src/test,okhttp/src/main
 https://github.com/AlmasB/FXGL.git,fxgl-core/src/test,fxgl-core/src/main
 https://github.com/requery/requery.git,requery-test,
