@@ -3,25 +3,32 @@
 from sys import path
 path.append('../../BabelRTS')
 from babelrts import BabelRTS
-from os.path import isdir, join, basename
+from os.path import isdir, join, basename, relpath
 from glob import glob
-from os import mkdir
+from os import mkdir, walk
 from re import compile
 from subprocess import run
-from time import time
-from statistics import mean
 from csv import DictReader
 from simpleobject import simpleobject as so
+from utils.java_evalutation import java_build_test
+from utils.javascript_evalutation import javascript_build_test
+from utils.python_evalutation import python_build_test
 
-N_REV = 30
-TOT_REV = N_REV + 1
+N_REV = 1
 
 SUBJECTS_FOLDER = 'subjects'
 RESULTS_FOLDER = 'results'
 SUBJECT_NAME = compile(r'([^\/]+)\.git$')
 REPOS_FOLDER = 'repos'
 
+BUILD_TEST = so(
+    java=java_build_test,
+    javascript=javascript_build_test,
+    python=python_build_test)
+
 BABELRTS_FILE = '.babelrts'
+
+EXCLUDE = ('node_modules',)
 
 def rc(cmd, cwd):
     return run(cmd, cwd=cwd, shell=True, capture_output=True, text=True)
@@ -64,7 +71,7 @@ def clone_subjects(subjects):
 def get_shas(subjects):
     print('***GETTING SHAS***')
     for subject in subjects:
-        shas = rc(f'git --no-pager log --first-parent --pretty=tformat:"%H" --max-count={TOT_REV}', subject.path)
+        shas = rc(f'git --no-pager log --first-parent --pretty=tformat:"%H" --max-count={N_REV}', subject.path)
         if shas.returncode:
             raise Exception(f'Unable to get shas for {subject.url}')
         subject.shas = tuple(reversed(tuple(sha for sha in shas.stdout.split('\n') if sha)))
@@ -89,57 +96,62 @@ def get_ild(babelRTS):
                 ild += 1
     return ild
 
-def run_babelrts(subjects, languages):
-    print('***RUNNING BABELRTS***')
-    ild = len(languages) > 1
+def delete_lines(path, extensions):
+    for root, dirs, files in walk(path):
+        dirs[:] = [dir for dir in dirs if dir not in EXCLUDE]
+        for file in files:
+            if file not in EXCLUDE:
+                if '.' in file:
+                    name, extension = file.rsplit('.', 1)
+                    if name and extension and extension in extensions:
+                        file_path = join(root, file)
+                        file_relpath = relpath(file_path, path)
+                        with open(file_path, 'r') as code:
+                            code = code.read().split('\n')
+                        for i in range(len(code)):
+                            missing_line = (line for pos, line in enumerate(code) if pos != index)
+                            with open(file_path, 'w') as out:
+                                out.write('\n'.join(missing_line))
+                            yield file_path
+                        with open(file_path, 'w') as out:
+                            out.write('\n'.join(code))
+
+def run(subjects, languages):
+    print('***RUNNING***')
+    extensions = BabelRTS(languages=languages).get_dependency_extractor().get_extensions()
+    build_test = BUILD_TEST[languages[0]]
     for subject in subjects:
         print(f'Subject: {subject.name}')
-        subject.times = []
-        subject.reductions = []
-        subject.changed = []
-        if ild:
-            subject.ilds = []
-        babelRTS = BabelRTS(subject.path, subject.source_folder, subject.test_folder, languages=languages)
-        first = True
+        subject.babelrts_failed = 0
+        subject.suite_failed = 0
+        subject.babelrts_killed = 0
+        subject.suite_killed = 0
+        babelRTS = BabelRTS(subject.path, subject.source_folder, subject.test_folder, exclude=EXCLUDE, languages=languages)
         for sha in subject.shas:
             if rc(f'git checkout {sha}', subject.path).returncode:
                 raise Exception('Unable to checkout sha {}'.format(sha))
-            if first:
-                first = False
-            else:
-                t = time()
-                selected_tests = babelRTS.rts()
-                t = time() - t
-                subject.times.append(t)
-                test_files = babelRTS.get_change_discoverer().get_test_files()
-                reduction = (1 - len(selected_tests)/len(test_files)) if test_files else 1
-                subject.reductions.append(reduction)
-                subject.changed.append(len(babelRTS.get_change_discoverer().get_changed_files()))
-                if ild:
-                    subject.ilds.append(get_ild(babelRTS))
-        subject.avg_time = mean(subject.times)
-        subject.avg_reduction = mean(subject.reductions)
-        subject.avg_changed = mean(subject.changed)
-        if ild:
-        	subject.avg_ild = mean(subject.ilds)
+            failed_tests = build_test()
+            if not failed_tests and failed_tests is not None:
+                babelRTS.rts()
+                for changed_file in delete_lines(subject.path, extensions):
+                    failed_tests = build_test()
+                    if failed_tests:
+                        subject.suite_killed += 1
+                        subject.suite_failed += len(failed_tests)
+                        babelRTS.get_change_discoverer().set_changed_files({changed_file})
+                        failed_tests = build_test(babelRTS.get_test_selector().selected_tests())
+                        if failed_tests:
+                            subject.babelrts_killed += 1
+                            subject.babelrts_failed += len(failed_tests)
 
 def save_results(subjects, languages):
     print('***SAVING RESULTS***')
-    ild = len(languages) > 1
     if not isdir(RESULTS_FOLDER):
         mkdir(RESULTS_FOLDER)
     with open(join(RESULTS_FOLDER, '_'.join(languages) + '_results.csv'), 'w') as out:
-        out.write('subject,sha,loc,nfiles,changed,reduction,time')
-        if ild:
-            out.write(',ild\n')
-        else:
-            out.write('\n')
+        out.write('subject,sha,loc,nfiles,babelrts_failed,suite_failed,babelrts_killed,babelrts_killed\n')
         for subject in subjects:
-            out.write(f'{subject.name},{subject.shas[-1]},{subject.loc},{subject.nfiles},{subject.avg_changed},{subject.avg_reduction},{subject.avg_time}')
-            if ild:
-                out.write(f',{subject.avg_ild}\n')
-            else:
-                out.write('\n')
+            out.write(f'{subject.name},{subject.shas[-1]},{subject.loc},{subject.nfiles},{subject.babelrts_failed},{subject.suite_failed},{subject.babelrts_killed},{subject.babelrts_killed}\n')
 
 def main():
     for subjects_file in glob(join(SUBJECTS_FOLDER, '*_subjects.csv')):
@@ -149,8 +161,8 @@ def main():
         clone_subjects(subjects)
         get_shas(subjects)
         get_loc_nfiles(subjects, languages)
-        run_babelrts(subjects, languages)
-        save_results(subjects, languages)
+        run(subjects, languages)
+        #save_results(subjects, languages)
 
 if __name__ == '__main__':
     main()
