@@ -9,21 +9,31 @@ RAT_SKIP = '<skip>true</skip>'
 HYRTS = '<plugin><groupId>org.hyrts</groupId><artifactId>hyrts-maven-plugin</artifactId><version>1.0.1</version></plugin>'
 EKSTAZI = '<plugin><groupId>org.ekstazi</groupId><artifactId>ekstazi-maven-plugin</artifactId><version>5.3.0</version><executions><execution><id>ekstazi</id><goals><goal>select</goal></goals></execution></executions></plugin>'
 PLUGINS = recmp('<plugins>')
+MISSING_PLUGINS = '<build><plugins></plugins></build>'
+DEPENDENCIES = recmp('</dependencies>')
 POM = 'pom.xml'
 
 def insert_string(s1, s2, pos):
     return s1[:pos] + s2 + s1[pos:]
 
-def insert_into_pom(s, re):
+def insert_into_pom(s, re, missing=None, position=None):
     with open(POM, 'r') as pom:
         pom = pom.read()
-    pos = re.search(pom).span()[1]
-    with open(POM, 'w') as out:
-        out.write(insert_string(pom, s, pos))
+    res = re.search(pom)
+    if res:
+        pos = res.span()[1]
+        with open(POM, 'w') as out:
+            out.write(insert_string(pom, s, pos))
+    elif missing and position:
+        pos = position.search(pom).span()[1]
+        with open(POM, 'w') as out:
+            out.write(insert_string(pom, missing, pos))
+        insert_into_pom(s, re)
+
 
 def build_java_project():
-    insert_into_pom(HYRTS, PLUGINS)
-    insert_into_pom(EKSTAZI, PLUGINS)
+    insert_into_pom(HYRTS, PLUGINS, MISSING_PLUGINS, DEPENDENCIES)
+    insert_into_pom(EKSTAZI, PLUGINS, MISSING_PLUGINS, DEPENDENCIES)
     insert_into_pom(RAT_SKIP, RAT_CONF)
     rc('mvn clean install -DskipTests')
 
