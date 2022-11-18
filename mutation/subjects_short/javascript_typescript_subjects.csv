@@ -1,0 +1,2 @@
+url,test_folder,source_folder
+https://github.com/jest-community/jest-junit.git,__tests__,

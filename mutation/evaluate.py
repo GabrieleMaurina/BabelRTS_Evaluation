@@ -1,37 +1,34 @@
 #!/usr/bin/env python
 
-from sys import path
+from sys import path, argv
 path.append('../../BabelRTS')
 from babelrts import BabelRTS
 from os.path import isdir, join, basename, relpath
 from glob import glob
 from os import mkdir, walk
 from re import compile
-from subprocess import run
 from csv import DictReader
 from simpleobject import simpleobject as so
-from utils.java_evalutation import java_build_test
-from utils.javascript_evalutation import javascript_build_test
-from utils.python_evalutation import python_build_test
+from utils.java import Java
+from utils.javascript import Javascript
+from utils.python import Python
+from utils.run_cmd import rc
 
 N_REV = 1
 
-SUBJECTS_FOLDER = 'subjects'
+SUBJECTS_FOLDER = 'subjects_long'
 RESULTS_FOLDER = 'results'
 SUBJECT_NAME = compile(r'([^\/]+)\.git$')
 REPOS_FOLDER = 'repos'
 
-BUILD_TEST = so(
-    java=java_build_test,
-    javascript=javascript_build_test,
-    python=python_build_test)
+LANGUAGES = so(
+    java=Java,
+    javascript=Javascript,
+    python=Python)
 
 BABELRTS_FILE = '.babelrts'
 
-EXCLUDE = ('node_modules',)
-
-def rc(cmd, cwd):
-    return run(cmd, cwd=cwd, shell=True, capture_output=True, text=True)
+EXCLUDED = ('node_modules',)
 
 def init(subjects_file):
     print('***COLLECTING SUBJECTS DATA***')
@@ -85,22 +82,11 @@ def get_loc_nfiles(subjects, languages):
             subject.loc += int(rc(f'( find . -name "*.{extension}" -print0 | xargs -0 cat ) | wc -l', subject.path).stdout)
             subject.nfiles += int(rc(f'find . -name "*.{extension}" | wc -l', subject.path).stdout)
 
-def get_ild(babelRTS):
-    ild = 0
-    dependency_graph = babelRTS.get_dependency_extractor().get_dependency_graph()
-    for file, dependencies in dependency_graph.items():
-        ext1 = file.rsplit('.',1)[-1]
-        for dependency in dependencies:
-            ext2 = dependency.rsplit('.',1)[-1]
-            if ext1 != ext2:
-                ild += 1
-    return ild
-
 def delete_lines(path, extensions):
     for root, dirs, files in walk(path):
-        dirs[:] = [dir for dir in dirs if dir not in EXCLUDE]
+        dirs[:] = [dir for dir in dirs if dir not in EXCLUDED]
         for file in files:
-            if file not in EXCLUDE:
+            if file not in EXCLUDED:
                 if '.' in file:
                     name, extension = file.rsplit('.', 1)
                     if name and extension and extension in extensions:
@@ -109,40 +95,47 @@ def delete_lines(path, extensions):
                         with open(file_path, 'r') as code:
                             code = code.read().split('\n')
                         for i in range(len(code)):
-                            missing_line = (line for pos, line in enumerate(code) if pos != index)
+                            print(i+1, code[i])
+                            missing_line = (line for pos, line in enumerate(code) if pos != i)
                             with open(file_path, 'w') as out:
                                 out.write('\n'.join(missing_line))
-                            yield file_path
+                            yield file_relpath
                         with open(file_path, 'w') as out:
                             out.write('\n'.join(code))
 
 def run(subjects, languages):
     print('***RUNNING***')
     extensions = BabelRTS(languages=languages).get_dependency_extractor().get_extensions()
-    build_test = BUILD_TEST[languages[0]]
+    language = LANGUAGES[languages[0]]()
     for subject in subjects:
         print(f'Subject: {subject.name}')
         subject.babelrts_failed = 0
         subject.suite_failed = 0
         subject.babelrts_killed = 0
         subject.suite_killed = 0
-        babelRTS = BabelRTS(subject.path, subject.source_folder, subject.test_folder, exclude=EXCLUDE, languages=languages)
+        langauge.set_project_folder(subject.path)
+        langauge.set_test_folder(subject.test_folder)
+        babelRTS = BabelRTS(subject.path, subject.source_folder, subject.test_folder, EXCLUDED, languages)
         for sha in subject.shas:
+            print(sha)
             if rc(f'git checkout {sha}', subject.path).returncode:
                 raise Exception('Unable to checkout sha {}'.format(sha))
-            failed_tests = build_test()
-            if not failed_tests and failed_tests is not None:
+            failures = langauge.test()
+            if failures == 0:
                 babelRTS.rts()
                 for changed_file in delete_lines(subject.path, extensions):
-                    failed_tests = build_test()
-                    if failed_tests:
+                    print(changed_file)
+                    failures = langauge.test()
+                    print(failures)
+                    if failures:
                         subject.suite_killed += 1
-                        subject.suite_failed += len(failed_tests)
+                        subject.suite_failed += failures
                         babelRTS.get_change_discoverer().set_changed_files({changed_file})
-                        failed_tests = build_test(babelRTS.get_test_selector().selected_tests())
-                        if failed_tests:
+                        failed_tests = langauge.test(babelRTS.get_test_selector().selected_tests())
+                        print('\t', failures)
+                        if failures:
                             subject.babelrts_killed += 1
-                            subject.babelrts_failed += len(failed_tests)
+                            subject.babelrts_failed += failures
 
 def save_results(subjects, languages):
     print('***SAVING RESULTS***')
@@ -154,7 +147,7 @@ def save_results(subjects, languages):
             out.write(f'{subject.name},{subject.shas[-1]},{subject.loc},{subject.nfiles},{subject.babelrts_failed},{subject.suite_failed},{subject.babelrts_killed},{subject.babelrts_killed}\n')
 
 def main():
-    for subjects_file in glob(join(SUBJECTS_FOLDER, '*_subjects.csv')):
+    for subjects_file in glob(join(argv[1] if len(argv) > 1 else SUBJECTS_FOLDER, '*_subjects.csv')):
         languages = basename(subjects_file).split('_')[:-1]
         print(f'\n\n*****LANGUAGES:{"-".join(languages)}*****')
         subjects = init(subjects_file)

@@ -53,7 +53,8 @@
     "test_folder":"test",
     "repos":[
       {
-        "url":"https://github.com/pyecharts/pyecharts"
+        "url":"https://github.com/pyecharts/pyecharts",
+        "test_folder":"test"
       }
     ]
   },

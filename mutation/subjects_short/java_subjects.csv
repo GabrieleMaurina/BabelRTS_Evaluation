@@ -1,0 +1,2 @@
+url,test_folder,source_folder
+https://github.com/apache/commons-cli.git,src/test/java,src/main/java

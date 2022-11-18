@@ -108,7 +108,8 @@
     "test_folder":"tests",
     "repos":[
       {
-        "url":"https://github.com/pyecharts/pyecharts"
+        "url":"https://github.com/pyecharts/pyecharts",
+        "test_folder":"test"
       },
       {
         "url":"https://github.com/tflearn/tflearn"

@@ -1,5 +1,5 @@
 url,test_folder,source_folder
-https://github.com/pyecharts/pyecharts.git,tests,
+https://github.com/pyecharts/pyecharts.git,test,
 https://github.com/tflearn/tflearn.git,tests,
 https://github.com/mementum/backtrader.git,tests,
 https://github.com/prompt-toolkit/python-prompt-toolkit.git,tests,
