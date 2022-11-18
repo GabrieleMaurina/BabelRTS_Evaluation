@@ -168,14 +168,13 @@
     },
     "run_babelrts_tests":"run_babelrts_javascript_tests",
     "src_folder":".",
+    "test_folder":"test",
     "repos":[
       {
-        "url":"https://github.com/axios/axios",
-        "test_folder":"test"
+        "url":"https://github.com/axios/axios"
       },
       {
-        "url":"https://github.com/gka/chroma.js",
-        "test_folder":"test"
+        "url":"https://github.com/gka/chroma.js"
       },
       {
         "url":"https://github.com/jest-community/jest-junit",
@@ -187,12 +186,10 @@
         "test_folder":"src/__tests__"
       },
       {
-        "url":"https://github.com/josdejong/mathjs",
-        "test_folder":"test"
+        "url":"https://github.com/josdejong/mathjs"
       },
       {
-        "url":"https://github.com/riot/riot",
-        "test_folder":"test"
+        "url":"https://github.com/riot/riot"
       },
       {
         "url":"https://github.com/jest-community/vscode-jest",
@@ -200,37 +197,30 @@
         "test_folder":"tests"
       },
       {
-        "url":"https://github.com/vuejs/vue",
-        "test_folder":"test"
+        "url":"https://github.com/vuejs/vue"
       },
       {
-        "url":"https://github.com/getgauge/taiko",
-        "test_folder":"test"
+        "url":"https://github.com/getgauge/taiko"
       },
       {
-        "url":"https://github.com/stripe/stripe-node",
-        "test_folder":"test"
+        "url":"https://github.com/stripe/stripe-node"
       },
       {
-        "url":"https://github.com/alibaba/butterfly",
-        "test_folder":"test"
+        "url":"https://github.com/alibaba/butterfly"
       },
       {
         "url":"https://github.com/videojs/videojs-contrib-hls",
-        "src_folder":"src",
-        "test_folder":"test"
+        "src_folder":"src"
       },
       {
         "url":"https://github.com/postaljs/postal.js",
         "test_folder":"spec"
       },
       {
-        "url":"https://github.com/substance/substance",
-        "test_folder":"test"
+        "url":"https://github.com/substance/substance"
       },
       {
-        "url":"https://github.com/pissang/claygl",
-        "test_folder":"test"
+        "url":"https://github.com/pissang/claygl"
       },
       {
         "url":"https://github.com/uber/react-digraph",
@@ -238,8 +228,7 @@
       },
       {
         "url":"https://github.com/vega/datalib",
-        "src_folder":"src",
-        "test_folder":"test"
+        "src_folder":"src"
       },
       {
         "url":"https://github.com/javve/list.js",
@@ -247,8 +236,7 @@
         "test_folder":"__test__"
       },
       {
-        "url":"https://github.com/OpenZeppelin/openzeppelin-contracts",
-        "test_folder":"test"
+        "url":"https://github.com/OpenZeppelin/openzeppelin-contracts"
       }
     ]
   }

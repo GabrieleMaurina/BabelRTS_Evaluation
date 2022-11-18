@@ -80,10 +80,10 @@
     },
     "run_babelrts_tests":"run_babelrts_javascript_tests",
     "src_folder":".",
+    "test_folder":"test",
     "repos":[
       {
-        "url":"https://github.com/axios/axios",
-        "test_folder":"test"
+        "url":"https://github.com/axios/axios"
       }
     ]
   }

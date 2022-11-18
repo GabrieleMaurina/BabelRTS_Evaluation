@@ -1,0 +1,15 @@
+https://github.com/apache/commons-configuration,src/test/java,src/main/java
+https://github.com/apache/commons-collections,src/test/java,src/main/java
+https://github.com/apache/commons-cli,src/test/java,src/main/java
+https://github.com/apache/commons-dbcp,src/test/java,src/main/java
+https://github.com/apache/commons-pool,src/test/java,src/main/java
+https://github.com/apache/commons-text,src/test/java,src/main/java
+https://github.com/apache/commons-fileupload,src/test/java,src/main/java
+https://github.com/apache/commons-io,src/test/java,src/main/java
+https://github.com/apache/commons-lang,src/test/java,src/main/java
+https://github.com/apache/commons-jxpath,src/test/java,src/main/java
+https://github.com/apache/commons-net,src/test/java,src/main/java
+https://github.com/apache/commons-validator,src/test/java,src/main/java
+https://github.com/brettwooldridge/HikariCP,src/test/java,src/main/java
+https://github.com/addthis/stream-lib,src/test/java,src/main/java
+https://github.com/palatable/lambda,src/test/java,src/main/java
