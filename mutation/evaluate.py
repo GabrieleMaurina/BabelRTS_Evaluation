@@ -152,7 +152,7 @@ def main():
         print(f'\n\n*****LANGUAGES:{"-".join(languages)}*****')
         subjects = init(subjects_file)
         clone_subjects(subjects)
-        get_shas(subjects)
+        get_shas(subjects, int(argv[2)] if len(argv) > 2 else N_REV)
         get_loc_nfiles(subjects, languages)
         run(subjects, languages)
         #save_results(subjects, languages)

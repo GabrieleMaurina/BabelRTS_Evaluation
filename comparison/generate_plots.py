@@ -1,14 +1,25 @@
 #!/usr/bin/env python
 
-from os.path import join, basename, isdir
-from os import mkdir
+from sys import path
+path.append('../')
+from plot_utils import plot
+from os.path import join, basename
 from glob import glob
-import matplotlib.pyplot as plt
-from csv import DictReader
 from simpleobject import simpleobject as so
 
 RESULTS_FOLDER = 'results'
-PLOTS_FOLDER = 'plots'
+
+COLORS = so(
+    babelrts=plot.COLORS.blue,
+    ekstazi=plot.COLORS.orange,
+    hyrts=plot.COLORS.green,
+    jest=plot.COLORS.red,
+    pytestrts=plot.COLORS.purple,
+    all=plot.COLORS.brown,
+    java=plot.COLORS.pink,
+    javascript=plot.COLORS.olive,
+    python=plot.COLORS.cyan,
+)
 
 def add_vetically(metric, table, data):
     keys = tuple((key, key.split('_')[-1].capitalize()) for key in table[0].keys() if key.startswith(metric))
@@ -34,9 +45,7 @@ def collect_data():
     data.f1score = {}
     for results_file in glob(join(RESULTS_FOLDER, '*_suts.csv')):
         language = basename(results_file).split('_')[0].capitalize()
-        with open(results_file, newline='') as csv:
-            reader = DictReader(csv)
-            table = tuple(so(row) for row in reader)
+        table = plot.read_csv(results_file)
         data.loc[language] = tuple(float(row.loc) for row in table)
         data.nfiles[language] = tuple(float(row.files) for row in table)
         data.changed[language] = tuple(float(row.changed) for row in table)
@@ -51,32 +60,19 @@ def collect_data():
         add_horizontally('tsr', table, data, language)
     return data
 
-def save_plot(data, title, y_label=None):
-    if not isdir(PLOTS_FOLDER):
-        mkdir(PLOTS_FOLDER)
-    file_name = title.lower().replace(' ', '_')
-    keys = tuple(sorted(data.keys()))
-    values = tuple(data[key] for key in keys)
-    figure = plt.figure()
-    plt.boxplot(values)
-    plt.xticks(range(1,len(keys)+1), keys)
-    if y_label: plt.ylabel(y_label)
-    plt.title(title)
-    figure.savefig(join(PLOTS_FOLDER, file_name) + '.pdf')
-
 def main():
     data = collect_data()
-    save_plot(data.loc, 'Lines Of Code')
-    save_plot(data.nfiles, 'Source Files')
-    save_plot(data.changed, 'Changed Files')
-    save_plot(data.changed_per, 'Changed Files (%)')
-    save_plot(data.recall, 'Recall')
-    save_plot(data.precision, 'Precision')
-    save_plot(data.accuracy, 'Accuracy')
-    save_plot(data.f1score, 'F1 Score')
+    plot.save_plot(data.loc, 'Lines Of Code', COLORS)
+    plot.save_plot(data.nfiles, 'Source Files', COLORS)
+    plot.save_plot(data.changed, 'Changed Files', COLORS)
+    plot.save_plot(data.changed_per, 'Changed Files (%)', COLORS)
+    plot.save_plot(data.recall, 'Recall', COLORS)
+    plot.save_plot(data.precision, 'Precision', COLORS)
+    plot.save_plot(data.accuracy, 'Accuracy', COLORS)
+    plot.save_plot(data.f1score, 'F1 Score', COLORS)
     for key in data.keys():
          if ' ' in key:
-             save_plot(data[key], key)
+            plot.save_plot(data[key], key, COLORS)
 
 if __name__ == '__main__':
     main()
