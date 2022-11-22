@@ -27,19 +27,23 @@ def read_csv(path):
 
 def get_color(label, colors):
     label = label.lower()
-    for key, color in sorted(colors.items(), key=lambda v: len(v[0]), reverse=True):
+    sorted_colors = sorted(colors.items(), key=lambda v: len(v[0]), reverse=True)
+    for key, color in sorted_colors:
+        if label.startswith(key):
+            return color
+    for key, color in sorted_colors:
         if key in label:
             return color
 
-def save_plot(data, title, colors):
+def save_plot(data, title, colors, sorted_keys=False):
     if not isdir(PLOTS_FOLDER):
         mkdir(PLOTS_FOLDER)
     file_name = title.lower().replace(' ', '_')
-    labels = tuple(sorted(data.keys()))
+    labels = tuple(sorted(data.keys()) if sorted_keys else data.keys())
     values = tuple(data[label] for label in labels)
-    width = max(3, len(labels)*0.6)
+    width = max(3, len(labels)*0.7)
     figure = plt.figure(figsize=(width,3))
-    if max(map(max, values)) > 100:
+    if max(map(max, values)) > 100 or min(map(min, values)) < 0:
         plt.yscale('log')
     plot = plt.boxplot(values, labels=labels, patch_artist=True)
     for label, box, median in zip(labels, plot['boxes'], plot['medians']):
@@ -47,4 +51,5 @@ def save_plot(data, title, colors):
         median.set_color(COLORS.black)
     plt.title(title)
     plt.tight_layout()
-    figure.savefig(join(PLOTS_FOLDER, file_name) + '.pdf')
+    plt.savefig(join(PLOTS_FOLDER, file_name) + '.pdf')
+    plt.close()

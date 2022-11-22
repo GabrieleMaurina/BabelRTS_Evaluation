@@ -34,7 +34,7 @@ def collect_data():
     data.deps = {}
     data.ilds = {}
     data.ilds_per = {}
-    for results_file in glob(join(RESULTS_FOLDER, '*_results.csv')):
+    for results_file in sorted(glob(join(RESULTS_FOLDER, '*_results.csv'))):
         languages = basename(results_file).split('_')[:-1]
         name = '\n'.join(language.capitalize() for language in languages)
         table = plot.read_csv(results_file)

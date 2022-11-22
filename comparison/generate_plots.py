@@ -21,9 +21,20 @@ COLORS = so(
     python=plot.COLORS.cyan,
 )
 
-def add_vetically(metric, table, data):
+def add_vertically(metric, table, data):
+    if metric not in data:
+        data[metric] = {}
     keys = tuple((key, key.split('_')[-1].capitalize()) for key in table[0].keys() if key.startswith(metric))
     for key, name in keys:
+        data[metric][name] = tuple(float(row[key]) for row in table)
+
+def add_plots(metric, table, data, language):
+    if metric not in data:
+        data[metric] = {}
+    keys = tuple((key, key.split('_')[0].capitalize()) for key in table[0].keys() if metric in key)
+    for key, name in keys:
+        if 'babelrts' in key or 'all' in key:
+            name += f'\n{language}'
         data[metric][name] = tuple(float(row[key]) for row in table)
 
 def add_horizontally(metric, table, data, language):
@@ -32,6 +43,7 @@ def add_horizontally(metric, table, data, language):
     for key, name in keys:
         values[name] = tuple(float(row[key]) for row in table)
     data[language + ' ' + metric.capitalize()] = values
+    add_plots(metric, table, data, language)
 
 def collect_data():
     data = so()
@@ -39,21 +51,17 @@ def collect_data():
     data.nfiles = {}
     data.changed = {}
     data.changed_per = {}
-    data.recall = {}
-    data.precision = {}
-    data.accuracy = {}
-    data.f1score = {}
-    for results_file in glob(join(RESULTS_FOLDER, '*_suts.csv')):
+    for results_file in sorted(glob(join(RESULTS_FOLDER, '*_suts.csv'))):
         language = basename(results_file).split('_')[0].capitalize()
         table = plot.read_csv(results_file)
         data.loc[language] = tuple(float(row.loc) for row in table)
         data.nfiles[language] = tuple(float(row.files) for row in table)
         data.changed[language] = tuple(float(row.changed) for row in table)
         data.changed_per[language] = tuple(float(row.changed_per) for row in table)
-        add_vetically('recall', table, data)
-        add_vetically('precision', table, data)
-        add_vetically('accuracy', table, data)
-        add_vetically('f1score', table, data)
+        add_vertically('recall', table, data)
+        add_vertically('precision', table, data)
+        add_vertically('accuracy', table, data)
+        add_vertically('f1score', table, data)
         add_horizontally('tests', table, data, language)
         add_horizontally('duration', table, data, language)
         add_horizontally('tr', table, data, language)
@@ -70,6 +78,10 @@ def main():
     plot.save_plot(data.precision, 'Precision', COLORS)
     plot.save_plot(data.accuracy, 'Accuracy', COLORS)
     plot.save_plot(data.f1score, 'F1 Score', COLORS)
+    plot.save_plot(data.tests, 'Selected Tests', COLORS)
+    plot.save_plot(data.duration, 'Testing Duration (s)', COLORS)
+    plot.save_plot(data.tr, 'Time Reduction (%)', COLORS)
+    plot.save_plot(data.tsr, 'Test Suite Reduction (%)', COLORS)
     for key in data.keys():
          if ' ' in key:
             plot.save_plot(data[key], key, COLORS)
