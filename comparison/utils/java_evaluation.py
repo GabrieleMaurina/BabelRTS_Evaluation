@@ -3,7 +3,7 @@ from re import compile as recmp
 from simpleobject import simpleobject as so
 from utils.run_cmd import rc
 
-MVN_TESTS = recmp(r'\[INFO\] Running (.+)\n\[')
+MVN_TESTS = recmp(r'Running (\S+)\n')
 RAT_CONF = recmp(r'<artifactId>apache-rat-plugin<\/artifactId>[\s\S]*?<configuration>')
 RAT_SKIP = '<skip>true</skip>'
 HYRTS = '<plugin><groupId>org.hyrts</groupId><artifactId>hyrts-maven-plugin</artifactId><version>1.0.1</version></plugin>'
