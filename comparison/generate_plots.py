@@ -31,7 +31,7 @@ def add_vertically(metric, table, data):
 def add_plots(metric, table, data, language):
     if metric not in data:
         data[metric] = {}
-    keys = tuple((key, key.split('_')[0].capitalize()) for key in table[0].keys() if metric in key)
+    keys = tuple((key, key.split('_')[0].capitalize()) for key in table[0].keys() if key.endswith(metric))
     for key, name in keys:
         if 'babelrts' in key or 'all' in key:
             name += f'\n{language}'
