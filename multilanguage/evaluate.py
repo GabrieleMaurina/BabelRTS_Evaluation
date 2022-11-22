@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from sys import path
+from sys import path, argv
 path.append('../../BabelRTS')
 from babelrts import BabelRTS
 from os.path import isdir, join, basename
@@ -78,16 +78,18 @@ def get_loc_nfiles(subjects, languages):
             subject.loc += int(rc(f'( find . -name "*.{extension}" -print0 | xargs -0 cat ) | wc -l', subject.path).stdout)
             subject.nfiles += int(rc(f'find . -name "*.{extension}" | wc -l', subject.path).stdout)
 
-def get_ild(babelRTS):
+def count_dependencies(babelRTS):
+    deps = 0
     ild = 0
     dependency_graph = babelRTS.get_dependency_extractor().get_dependency_graph()
     for file, dependencies in dependency_graph.items():
         ext1 = file.rsplit('.',1)[-1]
         for dependency in dependencies:
+            deps += 1
             ext2 = dependency.rsplit('.',1)[-1]
             if ext1 != ext2:
                 ild += 1
-    return ild
+    return deps, ild
 
 def run_babelrts(subjects, languages):
     print('***RUNNING BABELRTS***')
@@ -98,30 +100,34 @@ def run_babelrts(subjects, languages):
         subject.reductions = []
         subject.changed = []
         if ild:
+            subject.deps = []
             subject.ilds = []
         babelRTS = BabelRTS(subject.path, subject.source_folder, subject.test_folder, languages=languages)
         first = True
         for sha in subject.shas:
             if rc(f'git checkout {sha}', subject.path).returncode:
                 raise Exception('Unable to checkout sha {}'.format(sha))
+            t = time()
+            selected_tests = babelRTS.rts()
+            t = time() - t
             if first:
                 first = False
             else:
-                t = time()
-                selected_tests = babelRTS.rts()
-                t = time() - t
                 subject.times.append(t)
                 test_files = babelRTS.get_change_discoverer().get_test_files()
                 reduction = (1 - len(selected_tests)/len(test_files)) if test_files else 1
                 subject.reductions.append(reduction)
                 subject.changed.append(len(babelRTS.get_change_discoverer().get_changed_files()))
                 if ild:
-                    subject.ilds.append(get_ild(babelRTS))
+                    deps, ilds = count_dependencies(babelRTS)
+                    subject.deps.append(deps)
+                    subject.ilds.append(ilds)
         subject.avg_time = mean(subject.times)
         subject.avg_reduction = mean(subject.reductions)
         subject.avg_changed = mean(subject.changed)
         if ild:
-        	subject.avg_ild = mean(subject.ilds)
+            subject.avg_deps = mean(subject.deps)
+            subject.avg_ilds = mean(subject.ilds)
 
 def save_results(subjects, languages):
     print('***SAVING RESULTS***')
@@ -131,26 +137,28 @@ def save_results(subjects, languages):
     with open(join(RESULTS_FOLDER, '_'.join(languages) + '_results.csv'), 'w') as out:
         out.write('subject,sha,loc,nfiles,changed,reduction,time')
         if ild:
-            out.write(',ild\n')
+            out.write(',deps,ilds\n')
         else:
             out.write('\n')
         for subject in subjects:
             out.write(f'{subject.name},{subject.shas[-1]},{subject.loc},{subject.nfiles},{subject.avg_changed},{subject.avg_reduction},{subject.avg_time}')
             if ild:
-                out.write(f',{subject.avg_ild}\n')
+                out.write(f',{subject.avg_deps},{subject.avg_ilds}\n')
             else:
                 out.write('\n')
 
 def main():
+    experiments = tuple(languages.lower().split('_') for languages in argv[1:])
     for subjects_file in glob(join(SUBJECTS_FOLDER, '*_subjects.csv')):
         languages = basename(subjects_file).split('_')[:-1]
-        print(f'\n\n*****LANGUAGES:{"-".join(languages)}*****')
-        subjects = init(subjects_file)
-        clone_subjects(subjects)
-        get_shas(subjects)
-        get_loc_nfiles(subjects, languages)
-        run_babelrts(subjects, languages)
-        save_results(subjects, languages)
+        if not experiments or languages in experiments:
+            print(f'\n\n*****LANGUAGES:{"-".join(languages)}*****')
+            subjects = init(subjects_file)
+            clone_subjects(subjects)
+            get_shas(subjects)
+            get_loc_nfiles(subjects, languages)
+            run_babelrts(subjects, languages)
+            save_results(subjects, languages)
 
 if __name__ == '__main__':
     main()

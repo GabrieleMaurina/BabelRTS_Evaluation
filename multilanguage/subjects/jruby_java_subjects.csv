@@ -1,12 +1,13 @@
 url,test_folder,source_folder
+https://github.com/AndyObtiva/glimmer.git,spec,lib
 https://github.com/elastic/logstash.git,logstash-core/spec,logstash-core
 https://github.com/jruby/jruby.git,core/src/test,core/src/main
 https://github.com/jruby/warbler.git,spec,
 https://github.com/jruby/jruby-rack.git,src/spec,src/main
 https://github.com/jruby/activerecord-jdbc-adapter.git,test,
-https://github.com/colinsurprenant/redstorm.git,test,
+https://github.com/matadon/mizuno.git,spec,lib
 https://github.com/ruboto/ruboto.git,test,lib
 https://github.com/jruby/jruby-openssl.git,src/test,
 https://github.com/iconara/rubydoop.git,spec,
-https://github.com/headius/jruby-pg.git,spec,
-https://github.com/omghax/jruby-sandbox.git,spec,
+https://github.com/mkristian/jbundler.git,spec,lib
+https://github.com/joekiller/jruby-kafka.git,test,lib

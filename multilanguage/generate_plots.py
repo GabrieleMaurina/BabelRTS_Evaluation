@@ -21,6 +21,9 @@ COLORS = so(
 COLORS['c#'] = plot.COLORS.blue
 COLORS['c++'] = plot.COLORS.orange
 
+def div(a, b, c=0):
+    return a / b if b else c
+
 def collect_data():
     data = so()
     data.loc = {}
@@ -28,7 +31,9 @@ def collect_data():
     data.changed = {}
     data.reductions = {}
     data.times = {}
+    data.deps = {}
     data.ilds = {}
+    data.ilds_per = {}
     for results_file in glob(join(RESULTS_FOLDER, '*_results.csv')):
         languages = basename(results_file).split('_')[:-1]
         name = '\n'.join(language.capitalize() for language in languages)
@@ -38,8 +43,10 @@ def collect_data():
         data.changed[name] = tuple(float(row.changed) for row in table)
         data.reductions[name] = tuple(float(row.reduction) for row in table)
         data.times[name] = tuple(float(row.time) for row in table)
-        if 'ild' in table[0]:
-            data.ilds[name] = tuple(float(row.ild) for row in table)
+        if 'ilds' in table[0]:
+            data.deps[name] = tuple(float(row.deps) for row in table)
+            data.ilds[name] = tuple(float(row.ilds) for row in table)
+            data.ilds_per[name] = tuple(div(float(row.ilds), float(row.deps)) for row in table)
     return data
 
 def main():
@@ -49,7 +56,9 @@ def main():
     plot.save_plot(data.changed, 'Changed Files', COLORS)
     plot.save_plot(data.reductions, 'Test Suite Reduction (%)', COLORS)
     plot.save_plot(data.times, 'Analysis Time (s)', COLORS)
+    plot.save_plot(data.deps, 'File Dependencies', COLORS)
     plot.save_plot(data.ilds, 'Inter Language Dependencies', COLORS)
+    plot.save_plot(data.ilds_per, 'Inter Language Dependencies (%)', COLORS)
 
 if __name__ == '__main__':
     main()

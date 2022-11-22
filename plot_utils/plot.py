@@ -14,7 +14,9 @@ COLORS = so(
     pink='tab:pink',
     gray='tab:gray',
     olive='tab:olive',
-    cyan='tab:cyan'
+    cyan='tab:cyan',
+    white='white',
+    black='black',
 )
 
 PLOTS_FOLDER = 'plots'
@@ -40,8 +42,9 @@ def save_plot(data, title, colors):
     if max(map(max, values)) > 100:
         plt.yscale('log')
     plot = plt.boxplot(values, labels=labels, patch_artist=True)
-    for label, box in zip(labels, plot['boxes']):
+    for label, box, median in zip(labels, plot['boxes'], plot['medians']):
         box.set_facecolor(get_color(label, colors))
+        median.set_color(COLORS.black)
     plt.title(title)
     plt.tight_layout()
     figure.savefig(join(PLOTS_FOLDER, file_name) + '.pdf')
