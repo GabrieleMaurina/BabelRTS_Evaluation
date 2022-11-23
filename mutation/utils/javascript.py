@@ -9,7 +9,7 @@ class Javascript(Language):
             tests = ' '.join(tests)
         else:
             tests = self.test_folder
-        output.self.run(f'jest {tests}')
+        output = self.run(f'jest {tests}')
         return self.search_failures(output, FAILURES)
 
     def init_repo(self):

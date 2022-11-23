@@ -106,6 +106,16 @@ def delete_lines(path, extensions):
                         with open(file_path, 'w') as out:
                             out.write('\n'.join(code))
 
+def log(subject):
+    values = []
+    values.append(subject.mutants)
+    values.append(subject.valid_mutants)
+    values.append(subject.suite_killed)
+    values.append(subject.babelrts_killed)
+    values.append(subject.suite_failed)
+    values.append(subject.babelrts_failed)
+    print(','.join(str(v) for v in values))
+
 def run(subjects, languages):
     print('***RUNNING***')
     extensions = BabelRTS(languages=languages).get_dependency_extractor().get_extensions()
@@ -127,7 +137,6 @@ def run(subjects, languages):
                 raise Exception('Unable to checkout sha {}'.format(sha))
             language.init_repo()
             failures = language.test()
-            print(failures)
             if failures == 0:
                 babelRTS.rts()
                 for changed_file in delete_lines(subject.path, extensions):
@@ -135,16 +144,15 @@ def run(subjects, languages):
                     failures = language.test()
                     if failures is not None:
                         subject.valid_mutants += 1
-                    print('\t', failures)
                     if failures:
                         subject.suite_killed += 1
                         subject.suite_failed += failures
                         babelRTS.get_change_discoverer().set_changed_files({changed_file})
                         failures = language.test(babelRTS.get_test_selector().get_selected_tests())
-                        print('\t\t', failures)
                         if failures:
                             subject.babelrts_killed += 1
                             subject.babelrts_failed += failures
+                            log(subject)
 
 def save_results(subjects, languages):
     print('***SAVING RESULTS***')
@@ -169,7 +177,7 @@ def save_results(subjects, languages):
 def main():
     for subjects_file in sorted(glob(join(argv[1] if len(argv) > 1 else SUBJECTS_FOLDER, '*_subjects.csv'))):
         languages = basename(subjects_file).split('_')[:-1]
-        if languages[0] != 'python': continue
+        if languages[0] != 'javascript': continue
         print(f'\n\n*****LANGUAGES:{"-".join(languages)}*****')
         subjects = init(subjects_file)
         clone_subjects(subjects)
