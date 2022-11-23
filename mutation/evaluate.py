@@ -65,10 +65,10 @@ def clone_subjects(subjects):
         subject.branch = get_branch(subject.path)
         rc(f'rm {BABELRTS_FILE} ; git clean -fd ; git reset --hard ; git checkout {subject.branch} ; git pull', subject.path)
 
-def get_shas(subjects):
+def get_shas(subjects, n_revs):
     print('***GETTING SHAS***')
     for subject in subjects:
-        shas = rc(f'git --no-pager log --first-parent --pretty=tformat:"%H" --max-count={N_REV}', subject.path)
+        shas = rc(f'git --no-pager log --first-parent --pretty=tformat:"%H" --max-count={n_revs}', subject.path)
         if shas.returncode:
             raise Exception(f'Unable to get shas for {subject.url}')
         subject.shas = tuple(reversed(tuple(sha for sha in shas.stdout.split('\n') if sha)))
@@ -92,10 +92,12 @@ def delete_lines(path, extensions):
                     if name and extension and extension in extensions:
                         file_path = join(root, file)
                         file_relpath = relpath(file_path, path)
+                        print(file_relpath)
                         with open(file_path, 'r') as code:
                             code = code.read().split('\n')
+                        print(len(code))
+                        continue
                         for i in range(len(code)):
-                            print(i+1, code[i])
                             missing_line = (line for pos, line in enumerate(code) if pos != i)
                             with open(file_path, 'w') as out:
                                 out.write('\n'.join(missing_line))
@@ -109,30 +111,36 @@ def run(subjects, languages):
     language = LANGUAGES[languages[0]]()
     for subject in subjects:
         print(f'Subject: {subject.name}')
-        subject.babelrts_failed = 0
-        subject.suite_failed = 0
-        subject.babelrts_killed = 0
+        subject.mutants = 0
+        subject.valid_mutants = 0
         subject.suite_killed = 0
-        langauge.set_project_folder(subject.path)
-        langauge.set_test_folder(subject.test_folder)
+        subject.babelrts_killed = 0
+        subject.suite_failed = 0
+        subject.babelrts_failed = 0
+        language.set_project_folder(subject.path)
+        language.set_test_folder(subject.test_folder)
         babelRTS = BabelRTS(subject.path, subject.source_folder, subject.test_folder, EXCLUDED, languages)
         for sha in subject.shas:
             print(sha)
             if rc(f'git checkout {sha}', subject.path).returncode:
                 raise Exception('Unable to checkout sha {}'.format(sha))
-            failures = langauge.test()
+            language.init_repo()
+            failures = language.test()
+            print(failures)
             if failures == 0:
                 babelRTS.rts()
                 for changed_file in delete_lines(subject.path, extensions):
-                    print(changed_file)
-                    failures = langauge.test()
-                    print(failures)
+                    subject.mutants += 1
+                    failures = language.test()
+                    if failures is not None:
+                        subject.valid_mutants += 1
+                    print('\t', failures)
                     if failures:
                         subject.suite_killed += 1
                         subject.suite_failed += failures
                         babelRTS.get_change_discoverer().set_changed_files({changed_file})
-                        failed_tests = langauge.test(babelRTS.get_test_selector().selected_tests())
-                        print('\t', failures)
+                        failures = language.test(babelRTS.get_test_selector().get_selected_tests())
+                        print('\t\t', failures)
                         if failures:
                             subject.babelrts_killed += 1
                             subject.babelrts_failed += failures
@@ -142,20 +150,32 @@ def save_results(subjects, languages):
     if not isdir(RESULTS_FOLDER):
         mkdir(RESULTS_FOLDER)
     with open(join(RESULTS_FOLDER, '_'.join(languages) + '_results.csv'), 'w') as out:
-        out.write('subject,sha,loc,nfiles,babelrts_failed,suite_failed,babelrts_killed,babelrts_killed\n')
+        out.write('subject,sha,loc,nfiles,mutants,valid_mutants,suite_killed,babelrts_killed,suite_failed,babelrts_failed\n')
         for subject in subjects:
-            out.write(f'{subject.name},{subject.shas[-1]},{subject.loc},{subject.nfiles},{subject.babelrts_failed},{subject.suite_failed},{subject.babelrts_killed},{subject.babelrts_killed}\n')
+            values = []
+            values.append(subject.name)
+            values.append(subject.shas[-1])
+            values.append(subject.loc)
+            values.append(subject.nfiles)
+            values.append(subject.mutants)
+            values.append(subject.valid_mutants)
+            values.append(subject.suite_killed)
+            values.append(subject.babelrts_killed)
+            values.append(subject.suite_failed)
+            values.append(subject.babelrts_failed)
+            out.write(','.join(str(v) for v in values) + '\n')
 
 def main():
-    for subjects_file in glob(join(argv[1] if len(argv) > 1 else SUBJECTS_FOLDER, '*_subjects.csv')):
+    for subjects_file in sorted(glob(join(argv[1] if len(argv) > 1 else SUBJECTS_FOLDER, '*_subjects.csv'))):
         languages = basename(subjects_file).split('_')[:-1]
+        if languages[0] != 'java': continue
         print(f'\n\n*****LANGUAGES:{"-".join(languages)}*****')
         subjects = init(subjects_file)
         clone_subjects(subjects)
-        get_shas(subjects, int(argv[2)] if len(argv) > 2 else N_REV)
+        get_shas(subjects, int(argv[2]) if len(argv) > 2 else N_REV)
         get_loc_nfiles(subjects, languages)
         run(subjects, languages)
-        #save_results(subjects, languages)
+        save_results(subjects, languages)
 
 if __name__ == '__main__':
     main()

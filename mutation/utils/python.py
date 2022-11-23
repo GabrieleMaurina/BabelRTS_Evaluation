@@ -9,5 +9,5 @@ class Python(Language):
             tests = " ".join(tests)
         else:
             tests = self.test_folder
-        output = self.rc(f'python3.9 -m pytest {tests}')
-        return search_failures(output, FAILURES)
+        output = self.run(f'python3.9 -m pytest {tests}')
+        return self.search_failures(output, FAILURES)

@@ -9,8 +9,8 @@ class Javascript(Language):
             tests = ' '.join(tests)
         else:
             tests = self.test_folder
-        output.self.rc(f'jest {tests}')
-        return search_failures(output, FAILURES)
+        output.self.run(f'jest {tests}')
+        return self.search_failures(output, FAILURES)
 
     def init_repo(self):
-        self.rc('npm i --force')
+        self.run('npm i --force')

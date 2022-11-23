@@ -9,22 +9,24 @@ class Language:
 
     def set_project_folder(self, project_folder):
         self.project_folder = project_folder
-        self.init_repo()
 
     def set_test_folder(self, test_folder):
         self.test_folder = test_folder
 
     def run(self, cmd):
-        return rc(cmd, cwd=self.project_folder).stdout
+        try:
+            return rc(cmd, cwd=self.project_folder, timeout=180).stdout
+        except TimeoutExpired:
+            return ''
 
     @abstractmethod
     def test(self, tests=None):
         pass
 
-    def search_failures(output, re):
-        match = re.search(output)
+    def search_failures(self, text, re):
+        match = re.search(text)
         if match:
-            return int(match[1])
+            return sum(int(group) for group in match.groups())
         else:
             return None
 
