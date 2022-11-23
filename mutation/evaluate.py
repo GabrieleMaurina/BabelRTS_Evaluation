@@ -84,27 +84,20 @@ def get_loc_nfiles(subjects, languages):
             subject.loc += int(rc(f'( find . -name "*.{extension}" -print0 | xargs -0 cat ) | wc -l', subject.path).stdout)
             subject.nfiles += int(rc(f'find . -name "*.{extension}" | wc -l', subject.path).stdout)
 
-def delete_lines(path, extensions):
-    for root, dirs, files in walk(path):
-        dirs[:] = [dir for dir in dirs if dir not in EXCLUDED]
-        for file in files:
-            if file not in EXCLUDED:
-                if '.' in file:
-                    name, extension = file.rsplit('.', 1)
-                    if name and extension and extension in extensions:
-                        file_path = join(root, file)
-                        file_relpath = relpath(file_path, path)
-                        print(file_relpath)
-                        with open(file_path, 'r') as code:
-                            code = code.read().split('\n')
-                        for i in range(len(code)):
-                            if CHARS.search(code[i]):
-                                missing_line = (line for pos, line in enumerate(code) if pos != i)
-                                with open(file_path, 'w') as out:
-                                    out.write('\n'.join(missing_line))
-                                yield file_relpath
-                        with open(file_path, 'w') as out:
-                            out.write('\n'.join(code))
+def delete_lines(root, files):
+    for file in sorted(files):
+        print(file)
+        file_path = join(root, file)
+        with open(file_path, 'r') as code:
+            code = code.read().split('\n')
+        for i in range(len(code)):
+            if CHARS.search(code[i]):
+                mutant = (line for pos, line in enumerate(code) if pos != i)
+                with open(file_path, 'w') as out:
+                    out.write('\n'.join(mutant))
+                yield file, i
+        with open(file_path, 'w') as out:
+            out.write('\n'.join(code))
 
 def log(subject):
     values = []
@@ -114,11 +107,10 @@ def log(subject):
     values.append(subject.babelrts_killed)
     values.append(subject.suite_failed)
     values.append(subject.babelrts_failed)
-    print(','.join(str(v) for v in values))
+    print('\t'.join(str(v) for v in values))
 
 def run(subjects, languages):
     print('***RUNNING***')
-    extensions = BabelRTS(languages=languages).get_dependency_extractor().get_extensions()
     language = LANGUAGES[languages[0]]()
     for subject in subjects:
         print(f'Subject: {subject.name}')
@@ -138,8 +130,11 @@ def run(subjects, languages):
             language.init_repo()
             failures = language.test()
             if failures == 0:
-                babelRTS.rts()
-                for changed_file in delete_lines(subject.path, extensions):
+                babelRTS.get_change_discoverer().clear_babelrts_data()
+                babelRTS.get_change_discoverer().explore_codebase()
+                babelRTS.get_dependency_extractor().generate_dependency_graph()
+                source_files = babelRTS.get_change_discoverer().get_source_files()
+                for changed_file, line in delete_lines(subject.path, source_files):
                     subject.mutants += 1
                     failures = language.test()
                     if failures is not None:
@@ -148,11 +143,13 @@ def run(subjects, languages):
                         subject.suite_killed += 1
                         subject.suite_failed += failures
                         babelRTS.get_change_discoverer().set_changed_files({changed_file})
-                        failures = language.test(babelRTS.get_test_selector().get_selected_tests())
-                        if failures:
-                            subject.babelrts_killed += 1
-                            subject.babelrts_failed += failures
-                            log(subject)
+                        selected_tests = babelRTS.get_test_selector().select_tests()
+                        if selected_tests:
+                            failures = language.test(selected_tests)
+                            if failures:
+                                subject.babelrts_killed += 1
+                                subject.babelrts_failed += failures
+                        log(subject)
 
 def save_results(subjects, languages):
     print('***SAVING RESULTS***')
@@ -177,7 +174,7 @@ def save_results(subjects, languages):
 def main():
     for subjects_file in sorted(glob(join(argv[1] if len(argv) > 1 else SUBJECTS_FOLDER, '*_subjects.csv'))):
         languages = basename(subjects_file).split('_')[:-1]
-        if languages[0] != 'javascript': continue
+        if languages[0] != 'python': continue
         print(f'\n\n*****LANGUAGES:{"-".join(languages)}*****')
         subjects = init(subjects_file)
         clone_subjects(subjects)
