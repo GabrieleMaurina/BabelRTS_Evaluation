@@ -23,12 +23,14 @@ class Language:
     def test(self, tests=None):
         pass
 
-    def search_failures(self, text, re):
+    def search_failures(self, text, re, compiling=False):
         match = re.search(text)
         if match:
             return sum(int(group) for group in match.groups())
-        else:
+        elif compiling:
             return None
+        else:
+            return 0
 
     def init_repo(self):
         pass

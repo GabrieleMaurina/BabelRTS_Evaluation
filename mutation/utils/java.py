@@ -16,7 +16,7 @@ class Java(Language):
         else:
             tests = ''
         output = self.run(f'mvn clean test {tests}')
-        return self.search_failures(output, FAILURES)
+        return self.search_failures(output, FAILURES, True)
 
     def init_repo(self):
         self.insert_into_pom(RAT_SKIP, RAT_CONF)

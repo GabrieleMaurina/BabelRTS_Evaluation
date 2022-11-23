@@ -16,10 +16,12 @@ from utils.run_cmd import rc
 
 N_REV = 1
 
-SUBJECTS_FOLDER = 'subjects_long'
+SUBJECTS_FOLDER = 'subjects_short'
 RESULTS_FOLDER = 'results'
 SUBJECT_NAME = compile(r'([^\/]+)\.git$')
 REPOS_FOLDER = 'repos'
+
+CHARS = compile(r'[\w\d]')
 
 LANGUAGES = so(
     java=Java,
@@ -95,13 +97,12 @@ def delete_lines(path, extensions):
                         print(file_relpath)
                         with open(file_path, 'r') as code:
                             code = code.read().split('\n')
-                        print(len(code))
-                        continue
                         for i in range(len(code)):
-                            missing_line = (line for pos, line in enumerate(code) if pos != i)
-                            with open(file_path, 'w') as out:
-                                out.write('\n'.join(missing_line))
-                            yield file_relpath
+                            if CHARS.search(code[i]):
+                                missing_line = (line for pos, line in enumerate(code) if pos != i)
+                                with open(file_path, 'w') as out:
+                                    out.write('\n'.join(missing_line))
+                                yield file_relpath
                         with open(file_path, 'w') as out:
                             out.write('\n'.join(code))
 
@@ -168,7 +169,7 @@ def save_results(subjects, languages):
 def main():
     for subjects_file in sorted(glob(join(argv[1] if len(argv) > 1 else SUBJECTS_FOLDER, '*_subjects.csv'))):
         languages = basename(subjects_file).split('_')[:-1]
-        if languages[0] != 'java': continue
+        if languages[0] != 'python': continue
         print(f'\n\n*****LANGUAGES:{"-".join(languages)}*****')
         subjects = init(subjects_file)
         clone_subjects(subjects)
