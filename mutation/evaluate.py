@@ -9,6 +9,7 @@ from os import mkdir, walk
 from re import compile
 from csv import DictReader
 from simpleobject import simpleobject as so
+from json import dump
 from utils.java import Java
 from utils.javascript import Javascript
 from utils.python import Python
@@ -120,6 +121,7 @@ def run(subjects, languages):
         subject.babelrts_killed = 0
         subject.suite_failed = 0
         subject.babelrts_failed = 0
+        subject.missed = []
         language.set_project_folder(subject.path)
         language.set_test_folder(subject.test_folder)
         babelRTS = BabelRTS(subject.path, subject.source_folder, subject.test_folder, EXCLUDED, languages)
@@ -136,19 +138,29 @@ def run(subjects, languages):
                 source_files = babelRTS.get_change_discoverer().get_source_files()
                 for changed_file, line in delete_lines(subject.path, source_files):
                     subject.mutants += 1
-                    failures = language.test()
-                    if failures is not None:
+                    suite_failures = language.test()
+                    if suite_failures is not None:
                         subject.valid_mutants += 1
-                    if failures:
+                    if suite_failures:
                         subject.suite_killed += 1
-                        subject.suite_failed += failures
+                        subject.suite_failed += suite_failures
                         babelRTS.get_change_discoverer().set_changed_files({changed_file})
                         selected_tests = babelRTS.get_test_selector().select_tests()
+                        babelrts_failures = None
                         if selected_tests:
-                            failures = language.test(selected_tests)
-                            if failures:
+                            babelrts_failures = language.test(selected_tests)
+                            if babelrts_failures:
                                 subject.babelrts_killed += 1
-                                subject.babelrts_failed += failures
+                                subject.babelrts_failed += babelrts_failures
+                        if not selected_tests or not babelrts_failures:
+                            missed = so()
+                            missed.sha = sha
+                            missed.changed_file = changed_file
+                            missed.line = line
+                            missed.suite_failed = suite_failures
+                            missed.selected_tests = selected_tests
+                            missed.babelrts_failed = babelrts_failures
+                            subject.missed.append(missed)
                         log(subject)
 
 def save_results(subjects, languages):
@@ -170,11 +182,12 @@ def save_results(subjects, languages):
             values.append(subject.suite_failed)
             values.append(subject.babelrts_failed)
             out.write(','.join(str(v) for v in values) + '\n')
+    with open(join(RESULTS_FOLDER, '_'.join(languages) + '_results.json'), 'w') as out:
+        dump(subject, out, indent=2)
 
 def main():
     for subjects_file in sorted(glob(join(argv[1] if len(argv) > 1 else SUBJECTS_FOLDER, '*_subjects.csv'))):
         languages = basename(subjects_file).split('_')[:-1]
-        if languages[0] != 'python': continue
         print(f'\n\n*****LANGUAGES:{"-".join(languages)}*****')
         subjects = init(subjects_file)
         clone_subjects(subjects)

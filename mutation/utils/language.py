@@ -16,7 +16,8 @@ class Language:
 
     def run(self, cmd):
         try:
-            return rc(cmd, cwd=self.project_folder, timeout=180).stdout
+            res = rc(cmd, cwd=self.project_folder, timeout=180)
+            return res.stdout + '\n' + res.stderr
         except TimeoutExpired:
             return ''
 

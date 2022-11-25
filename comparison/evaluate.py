@@ -101,7 +101,6 @@ def process_repos(experiment):
     tools = tuple((tool, globals()[func]) for tool, func in experiment.tools.items())
     run_babelrts_tests = globals()[experiment.run_babelrts_tests]
     for r in experiment.repos:
-        if r.name != 'commons-configuration': continue
         print(r.name)
         with cd(join(REPOS,r.name)):
             babelRTS = BabelRTS('.', r.src_folder, r.test_folder, experiment.exclude, experiment.languages)
