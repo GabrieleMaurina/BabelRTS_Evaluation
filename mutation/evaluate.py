@@ -32,6 +32,7 @@ LANGUAGES = so(
 BABELRTS_FILE = '.babelrts'
 
 EXCLUDED = ('node_modules',)
+FORBIDDEN = ('if', 'for', 'while')
 
 def init(subjects_file):
     print('***COLLECTING SUBJECTS DATA***')
@@ -85,6 +86,14 @@ def get_loc_nfiles(subjects, languages):
             subject.loc += int(rc(f'( find . -name "*.{extension}" -print0 | xargs -0 cat ) | wc -l', subject.path).stdout)
             subject.nfiles += int(rc(f'find . -name "*.{extension}" | wc -l', subject.path).stdout)
 
+def valid_line(line):
+    if CHARS.search(line):
+        for word in FORBIDDEN:
+            if word in line:
+                return False
+        return True
+    return False
+
 def delete_lines(root, files):
     for file in sorted(files):
         print(file)
@@ -92,7 +101,7 @@ def delete_lines(root, files):
         with open(file_path, 'r') as code:
             code = code.read().split('\n')
         for i in range(len(code)):
-            if CHARS.search(code[i]):
+            if valid_line(code[i]):
                 mutant = (line for pos, line in enumerate(code) if pos != i)
                 with open(file_path, 'w') as out:
                     out.write('\n'.join(mutant))
@@ -154,13 +163,13 @@ def run(subjects, languages):
                                 subject.babelrts_failed += babelrts_failures
                         if not selected_tests or not babelrts_failures:
                             missed = so()
+                            subject.missed.append(missed)
                             missed.sha = sha
                             missed.changed_file = changed_file
                             missed.line = line
                             missed.suite_failed = suite_failures
-                            missed.selected_tests = selected_tests
+                            missed.selected_tests = tuple(selected_tests)
                             missed.babelrts_failed = babelrts_failures
-                            subject.missed.append(missed)
                         log(subject)
 
 def save_results(subjects, languages):
@@ -183,7 +192,7 @@ def save_results(subjects, languages):
             values.append(subject.babelrts_failed)
             out.write(','.join(str(v) for v in values) + '\n')
     with open(join(RESULTS_FOLDER, '_'.join(languages) + '_results.json'), 'w') as out:
-        dump(subject, out, indent=2)
+        dump(subjects, out, indent=2)
 
 def main():
     for subjects_file in sorted(glob(join(argv[1] if len(argv) > 1 else SUBJECTS_FOLDER, '*_subjects.csv'))):
