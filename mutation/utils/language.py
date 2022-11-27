@@ -26,11 +26,14 @@ class Language:
         pass
 
     def search_failures(self, text, re, missing_ok=True):
-        match = re.findall(text)[-1]
-        if isinstance(match, str):
-            match = (match,)
-        if match:
-            return sum(int(group) for group in match)
+        matches = re.findall(text)
+        if matches:
+            match = matches[-1]
+            if isinstance(match, str):
+                groups = (match,)
+            else:
+                groups = match
+            return sum(int(group) for group in groups)
         elif missing_ok:
             return 0
         else:

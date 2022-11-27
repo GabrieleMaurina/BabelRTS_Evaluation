@@ -14,6 +14,7 @@ from utils.java import Java
 from utils.javascript import Javascript
 from utils.python import Python
 from utils.run_cmd import rc
+from utils.deletion_mutation import delete_lines
 
 N_REV = 1
 
@@ -22,17 +23,20 @@ RESULTS_FOLDER = 'results'
 SUBJECT_NAME = compile(r'([^\/]+)\.git$')
 REPOS_FOLDER = 'repos'
 
-CHARS = compile(r'[\w\d]')
-
 LANGUAGES = so(
     java=Java,
     javascript=Javascript,
     python=Python)
 
+SKIP = so(
+    java=False,
+    javascript=True,
+    python=False
+)
+
 BABELRTS_FILE = '.babelrts'
 
 EXCLUDED = ('node_modules',)
-FORBIDDEN = ('if', 'for', 'while')
 
 def init(subjects_file):
     print('***COLLECTING SUBJECTS DATA***')
@@ -77,37 +81,21 @@ def get_shas(subjects, n_revs):
             raise Exception(f'Unable to get shas for {subject.url}')
         subject.shas = tuple(reversed(tuple(sha for sha in shas.stdout.split('\n') if sha)))
 
-def get_loc_nfiles(subjects, languages):
-    print('***GETTING LOC AND NFILES***')
-    extensions = BabelRTS(languages=languages).get_dependency_extractor().get_extensions()
-    for subject in subjects:
-        subject.loc = subject.nfiles = 0
-        for extension in extensions:
-            subject.loc += int(rc(f'( find . -name "*.{extension}" -print0 | xargs -0 cat ) | wc -l', subject.path).stdout)
-            subject.nfiles += int(rc(f'find . -name "*.{extension}" | wc -l', subject.path).stdout)
+def get_loc(root, files):
+    if files:
+        K = 100
+        files = tuple(join(root, file) for file in files)
+        partition = (files[i:i+K] for i in range(0, len(files), K))
+        def loc(paths):
+            return int(rc(f'wc -l ' + ' '.join(paths)).stdout.split('\n')[-1].rsplit(' ', 1)[0])
+        return sum(loc(paths) for paths in partition)
+    else:
+        return 0
 
-def valid_line(line):
-    if CHARS.search(line):
-        for word in FORBIDDEN:
-            if word in line:
-                return False
-        return True
-    return False
-
-def delete_lines(root, files):
-    for file in sorted(files):
-        print(file)
-        file_path = join(root, file)
-        with open(file_path, 'r') as code:
-            code = code.read().split('\n')
-        for i in range(len(code)):
-            if valid_line(code[i]):
-                mutant = (line for pos, line in enumerate(code) if pos != i)
-                with open(file_path, 'w') as out:
-                    out.write('\n'.join(mutant))
-                yield file, i
-        with open(file_path, 'w') as out:
-            out.write('\n'.join(code))
+def get_loc_nfiles(subject, babelRTS):
+    all_files = babelRTS.get_change_discoverer().get_all_files()
+    subject.loc = get_loc(subject.path, all_files)
+    subject.nfiles = len(all_files)
 
 def log(subject):
     values = []
@@ -134,7 +122,7 @@ def run(subjects, languages):
         language.set_project_folder(subject.path)
         language.set_test_folder(subject.test_folder)
         babelRTS = BabelRTS(subject.path, subject.source_folder, subject.test_folder, EXCLUDED, languages)
-        for sha in subject.shas:
+        for i, sha in enumerate(subject.shas):
             print(sha)
             if rc(f'git checkout {sha}', subject.path).returncode:
                 raise Exception('Unable to checkout sha {}'.format(sha))
@@ -143,6 +131,8 @@ def run(subjects, languages):
             if failures == 0:
                 babelRTS.get_change_discoverer().clear_babelrts_data()
                 babelRTS.get_change_discoverer().explore_codebase()
+                if not i:
+                    get_loc_nfiles(subject, babelRTS)
                 babelRTS.get_dependency_extractor().generate_dependency_graph()
                 source_files = babelRTS.get_change_discoverer().get_source_files()
                 for changed_file, line in delete_lines(subject.path, source_files):
@@ -161,15 +151,15 @@ def run(subjects, languages):
                             if babelrts_failures:
                                 subject.babelrts_killed += 1
                                 subject.babelrts_failed += babelrts_failures
-                        if not selected_tests or not babelrts_failures:
+                        if not selected_tests or not babelrts_failures or babelrts_failures < suite_failures:
                             missed = so()
                             subject.missed.append(missed)
                             missed.sha = sha
                             missed.changed_file = changed_file
                             missed.line = line
                             missed.suite_failed = suite_failures
-                            missed.selected_tests = tuple(selected_tests)
                             missed.babelrts_failed = babelrts_failures
+                            missed.selected_tests = tuple(selected_tests)
                         log(subject)
 
 def save_results(subjects, languages):
@@ -197,13 +187,13 @@ def save_results(subjects, languages):
 def main():
     for subjects_file in sorted(glob(join(argv[1] if len(argv) > 1 else SUBJECTS_FOLDER, '*_subjects.csv'))):
         languages = basename(subjects_file).split('_')[:-1]
-        print(f'\n\n*****LANGUAGES:{"-".join(languages)}*****')
-        subjects = init(subjects_file)
-        clone_subjects(subjects)
-        get_shas(subjects, int(argv[2]) if len(argv) > 2 else N_REV)
-        get_loc_nfiles(subjects, languages)
-        run(subjects, languages)
-        save_results(subjects, languages)
+        if not SKIP[languages[0]]:
+            print(f'\n\n*****LANGUAGES:{"-".join(languages)}*****')
+            subjects = init(subjects_file)
+            clone_subjects(subjects)
+            get_shas(subjects, int(argv[2]) if len(argv) > 2 else N_REV)
+            run(subjects, languages)
+            save_results(subjects, languages)
 
 if __name__ == '__main__':
     main()
