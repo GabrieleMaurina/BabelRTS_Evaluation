@@ -29,14 +29,16 @@ LANGUAGES = so(
     python=Python)
 
 SKIP = so(
-    java=True,
+    java=False,
     javascript=True,
-    python=False
+    python=True
 )
 
 BABELRTS_FILE = '.babelrts'
 
 EXCLUDED = ('node_modules',)
+
+DATA_KEYS = ('mutants', 'valid_mutants', 'suite_killed', 'babelrts_killed', 'suite_failed', 'babelrts_failed')
 
 def init(subjects_file):
     print('***COLLECTING SUBJECTS DATA***')
@@ -98,14 +100,10 @@ def get_loc_nfiles(subject, babelRTS):
     subject.nfiles = len(all_files)
 
 def log(subject):
-    values = []
-    values.append(subject.mutants)
-    values.append(subject.valid_mutants)
-    values.append(subject.suite_killed)
-    values.append(subject.babelrts_killed)
-    values.append(subject.suite_failed)
-    values.append(subject.babelrts_failed)
-    print('\t'.join(str(v) for v in values))
+    for key in DATA_KEYS:
+        name = ' '.join(v.capitalize() for v in key.split('_'))
+        print(f'{name}: {subject[key]}\t\t', end='')
+    print()
 
 def run(subjects, languages):
     print('***RUNNING***')
@@ -150,8 +148,8 @@ def run(subjects, languages):
                             babelrts_failures = language.test(selected_tests)
                             if babelrts_failures:
                                 subject.babelrts_killed += 1
-                                subject.babelrts_failed += babelrts_failures
-                        if not selected_tests or not babelrts_failures or babelrts_failures != suite_failures:
+                                subject.babelrts_failed += min(babelrts_failures, suite_failures)
+                        if babelrts_failures != suite_failures:
                             missed = so()
                             subject.missed.append(missed)
                             missed.sha = sha
@@ -159,7 +157,7 @@ def run(subjects, languages):
                             missed.line = line
                             missed.suite_failed = suite_failures
                             missed.babelrts_failed = babelrts_failures
-                            missed.selected_tests = tuple(selected_tests)\
+                            missed.selected_tests = tuple(selected_tests)
                         log(subject)
 
 def save_results(subjects, languages):

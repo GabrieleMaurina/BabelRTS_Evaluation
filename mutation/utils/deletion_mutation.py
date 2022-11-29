@@ -11,8 +11,10 @@ def valid_line(line):
     return False
 
 def delete_lines(root, files):
-    for file in sorted(files):
-        print(file)
+    tot = len(files)
+    for n, file in enumerate(sorted(files)):
+        percentage = round(n/tot*100, 2)
+        print(f'{percentage}% - {file}')
         file_path = join(root, file)
         with open(file_path, 'r') as code:
             code = code.read().split('\n')
