@@ -2,7 +2,7 @@ from re import compile
 from os.path import join
 
 ALPHANUMERIC = compile(r'[\w\d]')
-STATEMENTS = ('if', 'else', 'elif', 'for', 'while', 'switch', 'try', 'catch', 'except', 'import', 'export', 'require', 'package')
+STATEMENTS = ('class', 'interface', 'if', 'else', 'elif', 'for', 'while', 'switch', 'try', 'catch', 'except', 'import', 'export', 'require', 'package')
 STATEMENT = compile(r'\b(' + '|'.join(STATEMENTS) + r')\b')
 
 def valid_line(line):

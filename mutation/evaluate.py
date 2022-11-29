@@ -29,7 +29,7 @@ LANGUAGES = so(
     python=Python)
 
 SKIP = so(
-    java=False,
+    java=True,
     javascript=True,
     python=False
 )
@@ -84,10 +84,10 @@ def get_shas(subjects, n_revs):
 def get_loc(root, files):
     if files:
         K = 100
-        files = tuple(join(root, file) for file in files)
+        files = tuple(files)
         partition = (files[i:i+K] for i in range(0, len(files), K))
         def loc(paths):
-            return int(rc(f'wc -l ' + ' '.join(paths)).stdout.split('\n')[-1].rsplit(' ', 1)[0])
+            return int(rc(f'wc -l ' + ' '.join(paths), root).stdout.split('\n')[-2].rsplit(' ', 1)[0])
         return sum(loc(paths) for paths in partition)
     else:
         return 0
@@ -151,7 +151,7 @@ def run(subjects, languages):
                             if babelrts_failures:
                                 subject.babelrts_killed += 1
                                 subject.babelrts_failed += babelrts_failures
-                        if not selected_tests or not babelrts_failures or babelrts_failures < suite_failures:
+                        if not selected_tests or not babelrts_failures or babelrts_failures != suite_failures:
                             missed = so()
                             subject.missed.append(missed)
                             missed.sha = sha
@@ -159,7 +159,7 @@ def run(subjects, languages):
                             missed.line = line
                             missed.suite_failed = suite_failures
                             missed.babelrts_failed = babelrts_failures
-                            missed.selected_tests = tuple(selected_tests)
+                            missed.selected_tests = tuple(selected_tests)\
                         log(subject)
 
 def save_results(subjects, languages):
