@@ -54,6 +54,8 @@ def collect_data():
     for results_file in sorted(glob(join(RESULTS_FOLDER, '*_suts.csv'))):
         language = basename(results_file).split('_')[0].capitalize()
         table = plot.read_csv(results_file)
+        if language == 'Java':
+            print(len(table))
         data.loc[language] = tuple(float(row.loc) for row in table)
         data.nfiles[language] = tuple(float(row.files) for row in table)
         data.changed[language] = tuple(float(row.changed) for row in table)

@@ -24,7 +24,7 @@ PLOTS_FOLDER = 'plots'
 
 def read_csv(path):
     with open(path, newline='') as csv:
-        return tuple(so(row) for row in DictReader(csv))
+        return tuple(so(row) for row in DictReader(csv) if not next(iter(row.values())).startswith('#'))
 
 def get_color(label, colors):
     label = label.lower()
