@@ -74,7 +74,7 @@
       },
       {
         "url":"https://github.com/brettwooldridge/HikariCP",
-        "starting_commit":"979c0ec64e6adb02ddb17cc0efb0dd68b6d8dd02"
+        "starting_commit":"2a92bcf2c78ca1a033d3c3826eeb65dc98ac7985"
       },
       {
         "url":"https://github.com/addthis/stream-lib",
@@ -87,7 +87,7 @@
   },
   {
     "name":"Python",
-    "skip":false,
+    "skip":true,
     "revs":20,
     "changed_files":3,
     "languages":[
@@ -148,7 +148,7 @@
   },
   {
     "name":"JavaScript",
-    "skip":false,
+    "skip":true,
     "revs":20,
     "changed_files":3,
     "languages":[

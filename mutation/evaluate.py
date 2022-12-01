@@ -102,7 +102,7 @@ def get_loc_nfiles(subject, babelRTS):
 def log(subject):
     for key in DATA_KEYS:
         name = ' '.join(v.capitalize() for v in key.split('_'))
-        print(f'{name}: {subject[key]}\t\t', end='')
+        print(f'{name}: {subject[key]} \t', end='')
     print()
 
 def run(subjects, languages):

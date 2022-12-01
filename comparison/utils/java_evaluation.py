@@ -35,7 +35,7 @@ def build_java_project():
     insert_into_pom(HYRTS, PLUGINS, MISSING_PLUGINS, DEPENDENCIES)
     insert_into_pom(EKSTAZI, PLUGINS, MISSING_PLUGINS, DEPENDENCIES)
     insert_into_pom(RAT_SKIP, RAT_CONF)
-    rc('mvn clean install -DskipTests')
+    rc('mvn clean install -DskipTests -Drat.ignoreErrors=true')
 
 def collect_java_tests(test_folder, res):
     selected_tests = tuple(join(test_folder, *name.split('.')) + '.java' for name in MVN_TESTS.findall(res[1]))
@@ -43,17 +43,17 @@ def collect_java_tests(test_folder, res):
     return so(tests=sorted(selected_tests), duration=duration)
 
 def run_junit_tests(test_folder):
-    res = rc(f'mvn clean test')
+    res = rc(f'mvn clean test -Drat.ignoreErrors=true')
     return collect_java_tests(test_folder, res)
 
 def run_hyrts_tests(test_folder, hash=None):
-    res = rc(f'mvn clean hyrts:HyRTS')
+    res = rc(f'mvn clean hyrts:HyRTS -Drat.ignoreErrors=true')
     return collect_java_tests(test_folder, res)
 
 def run_ekstazi_tests(test_folder, hash=None):
-    res = rc(f'mvn clean ekstazi:ekstazi')
+    res = rc(f'mvn clean ekstazi:ekstazi -Drat.ignoreErrors=true')
     return collect_java_tests(test_folder, res)
 
 def run_babelrts_java_tests(selected_tests):
     selected_classes = (file.split('/java/',1)[1].replace('/','.') for file in selected_tests)
-    rc(f'mvn test -Dtest={",".join(selected_classes)}')
+    rc(f'mvn test -Dtest={",".join(selected_classes)} -Drat.ignoreErrors=true')
