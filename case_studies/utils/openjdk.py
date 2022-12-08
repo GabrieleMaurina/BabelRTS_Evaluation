@@ -1,0 +1,37 @@
+from babelrts.components.dependencies.language import Language
+from babelrts.components.dependencies.extension_pattern_action import ExtensionPatternAction
+
+from re import compile as cmp_re
+from os.path import join, relpath, normpath
+
+LOAD_LIBRARY_PATTERN = cmp_re(r'System.loadLibrary\("(.+?)"\)')
+
+count = 0
+
+def inc_count():
+    global count
+    count += 1
+
+def get_count():
+    global count
+    return count
+
+def reset_count():
+    global count
+    count = 0
+
+class OpenJDK(Language):
+    def get_extensions_patterns_actions(self):
+        return (
+            ExtensionPatternAction('java', LOAD_LIBRARY_PATTERN, self.load_library_action),
+        )
+
+    @staticmethod
+    def get_language():
+        return 'openjdk'
+
+    def load_library_action(self, match, file_path, folder_path, content):
+        inc_count()
+        all_files = self.get_dependency_extractor().get_babelrts().get_change_discoverer().get_all_files()
+        folder = folder_path.replace('classes', 'native')
+        return tuple(file for file in all_files if file.startswith(folder))
