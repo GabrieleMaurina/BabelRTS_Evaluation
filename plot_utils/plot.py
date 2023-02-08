@@ -55,4 +55,5 @@ def save_plot(data, title, colors, sorted_keys=False):
     plt.title('\n'.join(wrap(title, wrap_size, break_long_words=False)))
     plt.tight_layout(pad=0)
     plt.savefig(join(PLOTS_FOLDER, file_name) + '.pdf')
+    #plt.savefig(join(PLOTS_FOLDER, file_name) + '.png', dpi=1000)
     plt.close()
