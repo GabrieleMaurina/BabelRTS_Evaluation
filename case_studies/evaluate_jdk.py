@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from sys import path, argv
+from sys import path
 path.append('../../BabelRTS')
 from babelrts import BabelRTS
 from babelrts.components.dependency_extractor import LANGUAGE_IMPLEMENTATIONS
@@ -10,8 +10,9 @@ from time import time
 from simpleobject import simpleobject as so
 from utils.run_cmd import rc
 from utils.openjdk import OpenJDK, get_count, reset_count
+from utils.folder_manager import get_repo, dump
 
-JDK_PATH = 'repos/jdk'
+JDK_GIT = 'https://github.com/openjdk/jdk.git'
 
 MAIN_SRC_FOLDER = 'src'
 TEST_FOLDER = 'test'
@@ -40,38 +41,44 @@ def get_loc(root, files):
         return 0
 
 def main():
-    jdk = so()
+    implementations = [implementation for implementation in LANGUAGE_IMPLEMENTATIONS if implementation.get_language() in LANGUAGES]
+    implementations.append(OpenJDK)
 
-    main_source_folder = join(JDK_PATH, MAIN_SRC_FOLDER)
+    jdk = get_repo(JDK_GIT)
 
-    java_source_folders = tuple(relpath(source_folder, JDK_PATH) for source_folder in get_java_source_folders(main_source_folder))
-    native_source_folders = tuple(relpath(source_folder, JDK_PATH) for source_folder in get_native_source_folders(main_source_folder))
+    main_source_folder = join(jdk.path, MAIN_SRC_FOLDER)
+
+    java_source_folders = tuple(relpath(source_folder, jdk.path) for source_folder in get_java_source_folders(main_source_folder))
+    native_source_folders = tuple(relpath(source_folder, jdk.path) for source_folder in get_native_source_folders(main_source_folder))
 
     jdk.java_source_folders = len(java_source_folders)
     jdk.native_source_folders = len(native_source_folders)
 
-    implementations = [implementation for implementation in LANGUAGE_IMPLEMENTATIONS if implementation.get_language() in LANGUAGES]
-    implementations.append(OpenJDK)
+    babelRTS = BabelRTS(jdk.path, java_source_folders + native_source_folders, TEST_FOLDER, None, LANGUAGES, implementations)
 
-    reset_count()
+    jdk.commits = []
+    for index, sha in enumerate(jdk.shas):
+        print(sha)
+        rc(f'git checkout {sha}', jdk.path)
+        if index:
+            commit = so()
+            jdk.commits.append(commit)
+            reset_count()
+            t = time()
+            commit.selected_tests = len(babelRTS.rts())
+            commit.analysis_time = time() - t
+            all_files = babelRTS.get_change_discoverer().get_all_files()
+            commit.all_files = len(all_files)
+            commit.java_files = sum(1 for file in all_files if file.endswith('.java'))
+            commit.native_files = sum(1 for file in all_files if not file.endswith('.java'))
+            commit.loc = get_loc(jdk.path, all_files)
+            commit.ild = get_count()
+            commit.deps = sum(len(v) for v in babelRTS.get_dependency_extractor().get_dependency_graph().values())
+            commit.tests = len(babelRTS.get_change_discoverer().get_test_files())
+        else:
+            babelRTS.rts()
 
-    t = time()
-    babelRTS = BabelRTS(JDK_PATH, java_source_folders + native_source_folders, TEST_FOLDER, None, LANGUAGES, implementations)
-    babelRTS.get_change_discoverer().explore_codebase()
-    #babelRTS.get_dependency_extractor().generate_dependency_graph()
-    #babelRTS.test_selector().select_tests()
-    t = time() - t
-    jdk.analysis_time = t
-
-    all_files = babelRTS.get_change_discoverer().get_all_files()
-    jdk.all_files = len(all_files)
-    jdk.java_files = sum(1 for file in all_files if file.endswith('.java'))
-    jdk.native_files = sum(1 for file in all_files if not file.endswith('.java'))
-    jdk.loc = get_loc(JDK_PATH, all_files)
-
-    jdk.ild = get_count()
-
-    print(jdk)
+    dump(jdk, 'jdk')
 
 if __name__ == '__main__':
     main()
