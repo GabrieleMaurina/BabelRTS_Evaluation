@@ -11,6 +11,8 @@ from simpleobject import simpleobject as so
 from utils.run_cmd import rc
 from utils.openjdk import OpenJDK, get_count, reset_count
 from utils.folder_manager import get_repo, dump
+from utils.revisions import add_shas
+from utils.loc import get_loc
 
 JDK_GIT = 'https://github.com/openjdk/jdk.git'
 
@@ -29,21 +31,11 @@ def get_native_source_folders(path):
         if 'native' in dirs:
             yield join(root, 'native')
 
-def get_loc(root, files):
-    if files:
-        K = 100
-        files = tuple(files)
-        partition = (files[i:i+K] for i in range(0, len(files), K))
-        def loc(paths):
-            return int(rc(f'wc -l ' + ' '.join(paths), root).stdout.split('\n')[-2].rsplit(' ', 1)[0])
-        return sum(loc(paths) for paths in partition)
-    else:
-        return 0
-
 def main():
     implementations = [implementation for implementation in LANGUAGE_IMPLEMENTATIONS if implementation.get_language() in LANGUAGES]
     implementations.append(OpenJDK)
 
+    print('Cloning')
     jdk = get_repo(JDK_GIT)
 
     main_source_folder = join(jdk.path, MAIN_SRC_FOLDER)
@@ -54,7 +46,10 @@ def main():
     jdk.java_source_folders = len(java_source_folders)
     jdk.native_source_folders = len(native_source_folders)
 
+    print('RTS')
     babelRTS = BabelRTS(jdk.path, java_source_folders + native_source_folders, TEST_FOLDER, None, LANGUAGES, implementations)
+
+    add_shas(jdk, babelRTS.get_dependency_extractor().get_extensions())
 
     jdk.commits = []
     for index, sha in enumerate(jdk.shas):
@@ -75,6 +70,7 @@ def main():
             commit.ild = get_count()
             commit.deps = sum(len(v) for v in babelRTS.get_dependency_extractor().get_dependency_graph().values())
             commit.tests = len(babelRTS.get_change_discoverer().get_test_files())
+            commit.changed = len(babelRTS.get_change_discoverer().get_changed_files())
         else:
             babelRTS.rts()
 

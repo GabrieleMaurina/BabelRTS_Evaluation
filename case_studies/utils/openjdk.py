@@ -2,7 +2,6 @@ from babelrts.components.dependencies.language import Language
 from babelrts.components.dependencies.extension_pattern_action import ExtensionPatternAction
 
 from re import compile as cmp_re
-from os.path import join, relpath, normpath
 
 LOAD_LIBRARY_PATTERN = cmp_re(r'System.loadLibrary\("(.+?)"\)')
 
@@ -22,9 +21,7 @@ def reset_count():
 
 class OpenJDK(Language):
     def get_extensions_patterns_actions(self):
-        return (
-            ExtensionPatternAction('java', LOAD_LIBRARY_PATTERN, self.load_library_action),
-        )
+        return (ExtensionPatternAction('java', LOAD_LIBRARY_PATTERN, self.load_library_action),)
 
     @staticmethod
     def get_language():

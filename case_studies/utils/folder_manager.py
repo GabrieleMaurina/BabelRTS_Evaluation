@@ -7,7 +7,6 @@ from json import dump as dump_json
 
 REPOS = 'repos'
 RESULTS = 'results'
-N_COMMITS = 1
 
 REPO_NAME = cmpre(r'\/(\w+)\.git')
 
@@ -25,9 +24,7 @@ def get_repo(git):
     else:
         rc(f'git checkout master', path)
         rc(f'git pull', path)
-    rows = rc(f'git --no-pager log --first-parent --pretty=tformat:"%H" -{N_COMMITS+1}', path).stdout.split('\n')
-    shas = [row for row in reversed(rows) if row]
-    return so(name=name, git=git, path=path, shas=shas)
+    return so(name=name, git=git, path=path, shas=[])
 
 def dump(obj, name):
     with open(join(RESULTS, name) + '.json', 'w') as out:
