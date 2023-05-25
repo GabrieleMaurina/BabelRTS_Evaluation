@@ -1,11 +1,13 @@
 from utils.run_cmd import rc
 
-N_COMMITS = 20
+N_COMMITS = 1 #20
 CHANGED_FILES = 3
 
-def check_extension(name, extensions):
+CPP_FILE_EXTENSIONS = ('c', 'h', 'cpp', 'hpp', 'cc')
+
+def check_extension(name):
     if name:
-        for ext in extensions:
+        for ext in CPP_FILE_EXTENSIONS:
             if name.endswith('.' + ext):
                 return True
     return False
@@ -23,5 +25,5 @@ def get_commits(revs, changed_files, extensions, path):
         commits.append(hashcodes[p])
     return list(reversed(commits))
 
-def add_shas(repo, extensions):
-    repo.shas = get_commits(N_COMMITS, CHANGED_FILES, extensions, repo.path)
+def add_shas(repo):
+    repo.shas = get_commits(N_COMMITS, CHANGED_FILES, repo.path)

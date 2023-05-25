@@ -13,6 +13,7 @@ from utils.openjdk import OpenJDK, get_count, reset_count
 from utils.folder_manager import get_repo, dump
 from utils.revisions import add_shas
 from utils.loc import get_loc
+from utils.ilts import count_ilts
 
 JDK_GIT = 'https://github.com/openjdk/jdk.git'
 
@@ -37,6 +38,7 @@ def main():
 
     print('Cloning')
     jdk = get_repo(JDK_GIT)
+    add_shas(jdk)
 
     main_source_folder = join(jdk.path, MAIN_SRC_FOLDER)
 
@@ -48,8 +50,6 @@ def main():
 
     print('RTS')
     babelRTS = BabelRTS(jdk.path, java_source_folders + native_source_folders, TEST_FOLDER, None, LANGUAGES, implementations)
-
-    add_shas(jdk, babelRTS.get_dependency_extractor().get_extensions())
 
     jdk.commits = []
     for index, sha in enumerate(jdk.shas):
@@ -68,6 +68,7 @@ def main():
             commit.native_files = sum(1 for file in all_files if not file.endswith('.java'))
             commit.loc = get_loc(jdk.path, all_files)
             commit.ild = get_count()
+            commit.ilt = count_ilts(babelRTS)
             commit.deps = sum(len(v) for v in babelRTS.get_dependency_extractor().get_dependency_graph().values())
             commit.tests = len(babelRTS.get_change_discoverer().get_test_files())
             commit.changed = len(babelRTS.get_change_discoverer().get_changed_files())

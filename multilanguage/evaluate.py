@@ -12,6 +12,7 @@ from time import time
 from statistics import mean
 from csv import DictReader
 from simpleobject import simpleobject as so
+from collections import deque
 
 N_REV = 30
 TOT_REV = N_REV + 1
@@ -91,6 +92,27 @@ def count_dependencies(babelRTS):
                 ild += 1
     return deps, ild
 
+def count_ilts(babelRTS):
+    ilts = 0
+    test_files = babelRTS.get_change_discoverer().get_test_files()
+    dependency_graph = babelRTS.get_dependency_extractor().get_dependency_graph()
+    for test_file in test_files:
+        ext = test_file.rsplit('.',1)[-1]
+        if test_file in dependency_graph:
+            queue = deque(dependency_graph[test_file])
+            visited = set()
+            while queue:
+                file = queue.pop()
+                if file in visited:
+                    continue
+                visited.add(file)
+                if ext != file.rsplit('.',1)[-1]:
+                    ilts += 1
+                    break
+                if file in dependency_graph:
+                    queue.extend(dependency_graph[file])
+    return ilts
+
 def run_babelrts(subjects, languages):
     print('***RUNNING BABELRTS***')
     ild = len(languages) > 1
@@ -102,6 +124,7 @@ def run_babelrts(subjects, languages):
         if ild:
             subject.deps = []
             subject.ilds = []
+            subject.ilts = []
         babelRTS = BabelRTS(subject.path, subject.source_folder, subject.test_folder, languages=languages)
         first = True
         for sha in subject.shas:
@@ -122,6 +145,7 @@ def run_babelrts(subjects, languages):
                     deps, ilds = count_dependencies(babelRTS)
                     subject.deps.append(deps)
                     subject.ilds.append(ilds)
+                    subject.ilts.append(count_ilts(babelRTS))
         subject.avg_time = mean(subject.times)
         subject.avg_reduction = mean(subject.reductions)
         subject.avg_changed = mean(subject.changed)

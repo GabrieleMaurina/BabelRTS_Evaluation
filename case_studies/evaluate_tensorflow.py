@@ -13,6 +13,7 @@ from utils.tensorflow import Tensorflow, get_count, reset_count
 from utils.folder_manager import get_repo, dump
 from utils.revisions import add_shas
 from utils.loc import get_loc
+from utils.ilts import count_ilts
 
 TENSORFLOW_GIT = 'https://github.com/tensorflow/tensorflow.git'
 
@@ -27,11 +28,10 @@ def main():
 
     print('Cloning')
     tensorflow = get_repo(TENSORFLOW_GIT)
+    add_shas(tensorflow)
 
     print('RTS')
     babelRTS = BabelRTS(tensorflow.path, SRC_FOLDERS, TEST_FOLDERS, None, LANGUAGES, implementations)
-
-    add_shas(tensorflow, babelRTS.get_dependency_extractor().get_extensions())
 
     tensorflow.commits = []
     for index, sha in enumerate(tensorflow.shas):
@@ -50,6 +50,7 @@ def main():
             commit.native_files = sum(1 for file in all_files if not file.endswith('.py'))
             commit.loc = get_loc(tensorflow.path, all_files)
             commit.ild = get_count()
+            commit.ilt = count_ilts(babelRTS)
             commit.deps = sum(len(v) for v in babelRTS.get_dependency_extractor().get_dependency_graph().values())
             commit.tests = len(babelRTS.get_change_discoverer().get_test_files())
             commit.changed = len(babelRTS.get_change_discoverer().get_changed_files())
