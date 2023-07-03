@@ -3,3 +3,4 @@ plots
 results
 __pycache__
 .babelrts
+.vscode

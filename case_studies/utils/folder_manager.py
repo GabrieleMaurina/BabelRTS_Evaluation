@@ -16,6 +16,7 @@ if not isdir(REPOS):
 if not isdir(RESULTS):
     mkdir(RESULTS)
 
+
 def get_repo(git):
     name = REPO_NAME.search(git).group(1)
     path = join(REPOS, name)
@@ -25,6 +26,7 @@ def get_repo(git):
         rc(f'git checkout master', path)
         rc(f'git pull', path)
     return so(name=name, git=git, path=path, shas=[])
+
 
 def dump(obj, name):
     with open(join(RESULTS, name) + '.json', 'w') as out:
