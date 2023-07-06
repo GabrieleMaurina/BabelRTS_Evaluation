@@ -1,5 +1,5 @@
 from utils.run_cmd import rc
-N_COMMITS = 1  # 20
+N_COMMITS = 20
 CHANGED_FILES = 3
 
 CPP_FILE_EXTENSIONS = ('c', 'h', 'cpp', 'hpp', 'cc')
@@ -19,7 +19,6 @@ def n_changed(h1, h2, extensions, path):
 
 def find_starting_commit(hashcodes, extensions, path):
     for i in range(len(hashcodes) - 1):
-        print(i)
         if n_changed(hashcodes[i], hashcodes[i + 1], extensions, path) > 0:
             return i
     return 0
@@ -37,8 +36,8 @@ def get_commits(revs, changed_files, extensions, starting_commit_extensions, pat
     commit += 1
     for _ in range(revs):
         while n_changed(hashcodes[commit], commits[-1], extensions, path) < changed_files:
-            p += 1
-        commits.append(hashcodes[p])
+            commit += 1
+        commits.append(hashcodes[commit])
     return list(reversed(commits))
 
 

@@ -36,11 +36,9 @@ RUNS = {
 def main():
     run = argv[1]
 
-    with open(TENSORFLOW_META) as file:
-        tensorflow = load(file)
+    tensorflow = load(TENSORFLOW_META)
 
-    print(file)
-    # return
+    print(tensorflow)
 
     languages = RUNS[run]
     implementations = []
@@ -48,10 +46,7 @@ def main():
         if implementation.get_language() in RUNS[run]:
             implementations.append(implementation)
 
-    print(implementations)
-
-    print('RTS')
-    babelRTS = BabelRTS(tensorflow.path, SRC_FOLDERS,
+    babelRTS = BabelRTS(tensorflow['path'], SRC_FOLDERS,
                         TEST_FOLDERS, None, languages, implementations)
 
     tensorflow.commits = []

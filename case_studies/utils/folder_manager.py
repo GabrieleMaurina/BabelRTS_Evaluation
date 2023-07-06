@@ -34,5 +34,5 @@ def dump(obj, name):
 
 
 def load(name):
-    with open(join(RESULTS, name) + '.json', 'w') as file:
+    with open(join(RESULTS, name) + '.json', 'r') as file:
         return load_json(file)
