@@ -6,38 +6,53 @@ path.append('../../BabelRTS')
 from babelrts import BabelRTS
 from babelrts.components.dependency_extractor import LANGUAGE_IMPLEMENTATIONS
 
+from sys import argv
 from utils.ilts import count_ilts
 from utils.loc import get_loc
-from utils.revisions import add_shas
-from utils.folder_manager import get_repo, dump
+from utils.folder_manager import dump, load
 from utils.tensorflow import Tensorflow, get_count, reset_count
 from utils.run_cmd import rc
+from download_repos import TENSORFLOW_META
 from simpleobject import simpleobject as so
 from time import time
-
-TENSORFLOW_GIT = 'https://github.com/tensorflow/tensorflow.git'
 
 SRC_FOLDERS = ['tensorflow/core', 'tensorflow/python']
 TEST_FOLDERS = ['tensorflow/python/kernel_tests']
 
-LANGUAGES = ('python', 'c++', 'tensorflow')
+PYTHON = 'python'
+CPP = 'c++'
+JAVA = 'java'
+TENSORFLOW = 'tensorflow'
+LANGUAGE_IMPLEMENTATIONS += (Tensorflow,)
+
+RUNS = {
+    PYTHON: (PYTHON,),
+    CPP: (CPP,),
+    JAVA: (JAVA,),
+    'all': (PYTHON, CPP, JAVA, TENSORFLOW)
+}
 
 
 def main():
-    implementations = [
-        implementation for implementation in LANGUAGE_IMPLEMENTATIONS if implementation.get_language() in LANGUAGES]
-    implementations.append(Tensorflow)
+    run = argv[1]
 
-    print('Cloning')
-    tensorflow = get_repo(TENSORFLOW_GIT)
-    add_shas(tensorflow, ('java'))
+    with open(TENSORFLOW_META) as file:
+        tensorflow = load(file)
 
-    print(tensorflow.shas)
-    return
+    print(file)
+    # return
+
+    languages = RUNS[run]
+    implementations = []
+    for implementation in LANGUAGE_IMPLEMENTATIONS:
+        if implementation.get_language() in RUNS[run]:
+            implementations.append(implementation)
+
+    print(implementations)
 
     print('RTS')
     babelRTS = BabelRTS(tensorflow.path, SRC_FOLDERS,
-                        TEST_FOLDERS, None, LANGUAGES, implementations)
+                        TEST_FOLDERS, None, languages, implementations)
 
     tensorflow.commits = []
     for index, sha in enumerate(tensorflow.shas):
@@ -69,7 +84,7 @@ def main():
         else:
             babelRTS.rts()
 
-    dump(tensorflow, 'tensorflow')
+    dump(tensorflow, 'tensorflow_' + run)
 
 
 if __name__ == '__main__':
