@@ -15,9 +15,12 @@ from utils.run_cmd import rc
 from download_repos import TENSORFLOW_META
 from simpleobject import simpleobject as so
 from time import time
+from os.path import splitext, basename
 
-SRC_FOLDERS = ['tensorflow/core', 'tensorflow/python']
-TEST_FOLDERS = ['tensorflow/python/kernel_tests']
+SRC_FOLDERS = ['tensorflow/core', 'tensorflow/python',
+               'tensorflow/java/src/main/java', 'tensorflow/java/src/main/native', 'tensorflow/java/src/test/java']
+TEST_FOLDERS = ['tensorflow/python/kernel_tests',
+                'tensorflow/java/src/test/java']
 
 PYTHON = 'python'
 CPP = 'c++'
@@ -33,12 +36,51 @@ RUNS = {
 }
 
 
+def is_test(path):
+    name, extension = splitext(basename(path))
+    return name.lower().endswith('test')
+
+
+def check_additional_tests(change_discoverer):
+    source_files = change_discoverer.get_source_files()
+    test_files = change_discoverer.get_test_files()
+    for source_file in tuple(source_files):
+        if is_test(source_file):
+            test_files.add(source_file)
+            source_files.remove(source_file)
+
+
+def count_file_type(files):
+    data = so(cpp=0, java=0, python=0)
+    for file in files:
+        if file.endswith('.java'):
+            data.java += 1
+        elif file.endswith('.py'):
+            data.python += 1
+        else:
+            data.pp += 1
+    return data
+
+
+def count_files(babelRTS):
+    data = so()
+
+    change_discoverer = babelRTS.get_change_discoverer()
+    data.source_files = count_file_type(
+        change_discoverer.get_source_files())
+    data.test_files = count_file_type(change_discoverer.get_test_files())
+    data.changed = count_file_type(change_discoverer.get_changed_files())
+
+    test_selector = babelRTS.get_test_selector()
+    data.selected_tests = count_file_type(test_selector.get_selected_tests())
+
+    return data
+
+
 def main():
     run = argv[1]
 
-    tensorflow = load(TENSORFLOW_META)
-
-    print(tensorflow)
+    tensorflow = so(load(TENSORFLOW_META))
 
     languages = RUNS[run]
     implementations = []
@@ -55,26 +97,26 @@ def main():
         rc(f'git checkout {sha}', tensorflow.path)
         if index:
             commit = so()
+            commit.sha = sha
             tensorflow.commits.append(commit)
             reset_count()
             t = time()
-            commit.selected_tests = len(babelRTS.rts())
+            babelRTS.get_change_discoverer().explore_codebase()
+            check_additional_tests(babelRTS.get_change_discoverer())
+            babelRTS.get_dependency_extractor().generate_dependency_graph()
+            babelRTS.get_test_selector().select_tests()
             commit.analysis_time = time() - t
-            all_files = babelRTS.get_change_discoverer().get_all_files()
-            commit.all_files = len(all_files)
-            commit.python_files = sum(
-                1 for file in all_files if file.endswith('.py'))
-            commit.native_files = sum(
-                1 for file in all_files if not file.endswith('.py'))
-            commit.loc = get_loc(tensorflow.path, all_files)
+
+            commit.files = count_files(babelRTS)
+
+            commit.loc = get_loc(
+                tensorflow.path, babelRTS.get_change_discoverer().get_all_files())
             commit.ild = get_count()
             commit.ilt = count_ilts(babelRTS)
             commit.deps = sum(len(v) for v in babelRTS.get_dependency_extractor(
             ).get_dependency_graph().values())
-            commit.tests = len(
-                babelRTS.get_change_discoverer().get_test_files())
-            commit.changed = len(
-                babelRTS.get_change_discoverer().get_changed_files())
+            commit.selected_tests = tuple(
+                babelRTS.get_test_selector().get_selected_tests())
             print(commit)
         else:
             babelRTS.rts()

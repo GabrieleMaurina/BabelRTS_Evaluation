@@ -1,4 +1,5 @@
 from utils.run_cmd import rc
+
 N_COMMITS = 20
 CHANGED_FILES = 3
 
@@ -19,7 +20,9 @@ def n_changed(h1, h2, extensions, path):
 
 def find_starting_commit(hashcodes, extensions, path):
     for i in range(len(hashcodes) - 1):
-        if n_changed(hashcodes[i], hashcodes[i + 1], extensions, path) > 0:
+        changed = n_changed(hashcodes[i], hashcodes[i + 1], extensions, path)
+        print(i, changed)
+        if changed > 0:
             return i
     return 0
 

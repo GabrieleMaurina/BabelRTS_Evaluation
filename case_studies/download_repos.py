@@ -9,7 +9,7 @@ TENSORFLOW_META = 'tensorflow_meta'
 
 def main():
     tensorflow = get_repo(TENSORFLOW_GIT)
-    add_shas(tensorflow, ('java'))
+    add_shas(tensorflow, ('java',))
 
     print(tensorflow)
     dump(tensorflow, TENSORFLOW_META)
