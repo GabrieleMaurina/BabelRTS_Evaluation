@@ -1,49 +1,14 @@
-from utils.run_cmd import rc
+from os.path import join
+import pandas as pd
 
-N_COMMITS = 20
-CHANGED_FILES = 3
+N_COMMITS = 11
 
-CPP_FILE_EXTENSIONS = ('c', 'h', 'cpp', 'hpp', 'cc')
-
-
-def check_extension(name, extensions):
-    if name:
-        for ext in extensions:
-            if name.endswith('.' + ext):
-                return True
-    return False
+RESULTS = 'results'
+TENSORFLOW_CHANGES = join(RESULTS, 'tensorflow_changes.csv')
 
 
-def n_changed(h1, h2, extensions, path):
-    return sum(1 for name in rc(f'git --no-pager diff --name-only {h1} {h2}', path).stdout.split('\n') if check_extension(name, extensions))
-
-
-def find_starting_commit(hashcodes, extensions, path):
-    for i in range(len(hashcodes) - 1):
-        changed = n_changed(hashcodes[i], hashcodes[i + 1], extensions, path)
-        print(i, changed)
-        if changed > 0:
-            return i
-    return 0
-
-
-def get_commits(revs, changed_files, extensions, starting_commit_extensions, path):
-    hashcodes = tuple(hash for hash in rc(
-        'git --no-pager log --first-parent --pretty=tformat:"%H"', path).stdout.split('\n') if hash)
-    if starting_commit_extensions:
-        commit = find_starting_commit(
-            hashcodes, starting_commit_extensions, path)
-    else:
-        commit = 0
-    commits = [hashcodes[commit]]
-    commit += 1
-    for _ in range(revs):
-        while n_changed(hashcodes[commit], commits[-1], extensions, path) < changed_files:
-            commit += 1
-        commits.append(hashcodes[commit])
-    return list(reversed(commits))
-
-
-def add_shas(repo, starting_commit_extensions=None):
-    repo.shas = get_commits(N_COMMITS, CHANGED_FILES,
-                            CPP_FILE_EXTENSIONS, starting_commit_extensions, repo.path)
+def add_shas(repo, starting_commit_index, step_size):
+    hashcodes = tuple(pd.read_csv(TENSORFLOW_CHANGES).hashcode)
+    commits = hashcodes[::step_size]
+    commits = commits[starting_commit_index: starting_commit_index + N_COMMITS]
+    repo.shas = commits

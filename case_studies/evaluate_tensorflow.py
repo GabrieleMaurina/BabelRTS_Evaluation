@@ -117,7 +117,6 @@ def main():
             ).get_dependency_graph().values())
             commit.selected_tests = tuple(
                 babelRTS.get_test_selector().get_selected_tests())
-            print(commit)
         else:
             babelRTS.rts()
 
