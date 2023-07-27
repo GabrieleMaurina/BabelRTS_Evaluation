@@ -58,7 +58,7 @@ def count_file_type(files):
         elif file.endswith('.py'):
             data.python += 1
         else:
-            data.pp += 1
+            data.cpp += 1
     return data
 
 

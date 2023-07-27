@@ -1,10 +1,12 @@
 from os.path import join
 from matplotlib import pyplot as plt
+from progressbar import progressbar
 import pandas as pd
 
 RESULTS = 'results'
 TENSORFLOW_CHANGES = join(RESULTS, 'tensorflow_changes.csv')
 CONSECUTIVE_CHANGES = join(RESULTS, 'consecutive_changes.csv')
+BEST_WINDOW = join(RESULTS, 'best_window.csv')
 
 
 def plot_changes(data):
@@ -36,9 +38,9 @@ def group_of(data, k):
     groups = data.groupby(data.index // k)
     aggregations = {
         'hashcode': ('hashcode', 'first'),
-        'java': ('java', 'max'),
-        'python': ('python', 'max'),
-        'cpp': ('cpp', 'max')
+        'java': ('java', 'sum'),
+        'python': ('python', 'sum'),
+        'cpp': ('cpp', 'sum')
     }
     return groups.agg(**aggregations)
 
@@ -48,8 +50,28 @@ def save_consecutives(consecutives):
     df.to_csv(CONSECUTIVE_CHANGES, index=False)
 
 
+def find_best_window(data):
+    best_index = None
+    best_score = -1
+    best_hashcodes = None
+    n = len(data) - 10
+    for i in progressbar(range(n)):
+        window = data.iloc[i:i + 10]
+        score = window[['java', 'python', 'cpp']].sum().min()
+        if score > best_score:
+            best_score = score
+            best_index = i
+            best_hashcodes = tuple(window.hashcode)
+    return best_index, best_score, best_hashcodes
+
+
 def main():
     data = pd.read_csv(TENSORFLOW_CHANGES)
+
+    best_window = find_best_window(data)
+    print(best_window)
+    return
+
     # plot_changes(data)
     consecutives = []
     for k in range(1, 100):
