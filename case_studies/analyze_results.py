@@ -38,8 +38,13 @@ def process_commit(commit, cpp_commit, python_commit, java_commit, all_commit):
     commit['A'] = len(A)
 
     CUPUJ = (C | P | J)
-
     commit['CUPUJ'] = len(CUPUJ)
+
+    A_D_CUPUJ = A - CUPUJ
+    commit['A\(CUPUJ)'] = len(A_D_CUPUJ)
+
+    CUPUJ_D_A = CUPUJ - A
+    commit['(CUPUJ)\A'] = len(CUPUJ_D_A)
 
     C_D_A = C - A
     P_D_A = P - A
@@ -66,7 +71,7 @@ def aggregate_results(results):
                 java_commit['sha'], all_commit['sha'])
         if any(sha != shas[0] for sha in shas):
             raise ValueError(f'Commits do not match {shas}')
-        commit = {}
+        commit = {'sha': shas[0]}
         aggregate_results.append(commit)
         process_commit(commit, cpp_commit, python_commit,
                        java_commit, all_commit)

@@ -7,17 +7,21 @@ LOAD_LIBRARY_PATTERN = cmp_re(r'System.loadLibrary\("(.+?)"\)')
 
 count = 0
 
+
 def inc_count():
     global count
     count += 1
+
 
 def get_count():
     global count
     return count
 
+
 def reset_count():
     global count
     count = 0
+
 
 class OpenJDK(Language):
     def get_extensions_patterns_actions(self):
@@ -28,7 +32,12 @@ class OpenJDK(Language):
         return 'openjdk'
 
     def load_library_action(self, match, file_path, folder_path, content):
-        inc_count()
-        all_files = self.get_dependency_extractor().get_babelrts().get_change_discoverer().get_all_files()
-        folder = folder_path.replace('classes', 'native')
-        return tuple(file for file in all_files if file.startswith(folder))
+        all_files = self.get_dependency_extractor(
+        ).get_babelrts().get_change_discoverer().get_all_files()
+        folder = folder_path.rsplit('java', 1)[0] + 'native'
+        native_deps = tuple(
+            file for file in all_files if file.startswith(folder))
+        if native_deps:
+            for _ in native_deps:
+                inc_count()
+            return native_deps

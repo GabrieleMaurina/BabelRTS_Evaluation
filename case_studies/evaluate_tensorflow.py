@@ -7,18 +7,19 @@ from babelrts import BabelRTS
 from babelrts.components.dependency_extractor import LANGUAGE_IMPLEMENTATIONS
 
 from sys import argv
-from utils.ilts import count_ilts
+from utils.ilt import count_tests
 from utils.loc import get_loc
 from utils.folder_manager import dump, load
-from utils.tensorflow import Tensorflow, get_count, reset_count
 from utils.run_cmd import rc
 from download_repos import TENSORFLOW_META
 from simpleobject import simpleobject as so
 from time import time
 from os.path import splitext, basename
+import utils.tensorflow as tf
+import utils.openjdk as ojdk
 
 SRC_FOLDERS = ['tensorflow/core', 'tensorflow/python',
-               'tensorflow/java/src/main/java', 'tensorflow/java/src/main/native', 'tensorflow/java/src/test/java']
+               'tensorflow/java/src/main/java', 'tensorflow/java/src/main/native']
 TEST_FOLDERS = ['tensorflow/python/kernel_tests',
                 'tensorflow/java/src/test/java']
 
@@ -26,13 +27,14 @@ PYTHON = 'python'
 CPP = 'c++'
 JAVA = 'java'
 TENSORFLOW = 'tensorflow'
-LANGUAGE_IMPLEMENTATIONS += (Tensorflow,)
+OPENJDK = 'openjdk'
+LANGUAGE_IMPLEMENTATIONS += (tf.Tensorflow, ojdk.OpenJDK)
 
 RUNS = {
     PYTHON: (PYTHON,),
     CPP: (CPP,),
     JAVA: (JAVA,),
-    'all': (PYTHON, CPP, JAVA, TENSORFLOW)
+    'all': (PYTHON, CPP, JAVA, TENSORFLOW, OPENJDK)
 }
 
 
@@ -99,7 +101,8 @@ def main():
             commit = so()
             commit.sha = sha
             tensorflow.commits.append(commit)
-            reset_count()
+            tf.reset_count()
+            ojdk.reset_count()
             t = time()
             babelRTS.get_change_discoverer().explore_codebase()
             check_additional_tests(babelRTS.get_change_discoverer())
@@ -111,8 +114,10 @@ def main():
 
             commit.loc = get_loc(
                 tensorflow.path, babelRTS.get_change_discoverer().get_all_files())
-            commit.ild = get_count()
-            commit.ilt = count_ilts(babelRTS)
+            commit.p2c = tf.get_count()
+            commit.j2c = ojdk.get_count()
+            commit.ild = commit.p2c + commit.j2c
+            commit.tests = count_tests(babelRTS)
             commit.deps = sum(len(v) for v in babelRTS.get_dependency_extractor(
             ).get_dependency_graph().values())
             commit.selected_tests = tuple(
