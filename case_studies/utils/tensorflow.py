@@ -5,6 +5,7 @@ from re import compile as cmp_re
 from os.path import basename
 
 WHOLE_PATTERN = cmp_re(r'^[\s\S]*$')
+LOAD_LIBRARY_PATTERN = cmp_re(r'System.loadLibrary\("(.+?)"\)')
 
 count = 0
 
@@ -26,7 +27,8 @@ def reset_count():
 
 class Tensorflow(Language):
     def get_extensions_patterns_actions(self):
-        return (ExtensionPatternAction('py', WHOLE_PATTERN, self.init_native_action),)
+        return (ExtensionPatternAction('py', WHOLE_PATTERN, self.init_native_action),
+                ExtensionPatternAction('java', LOAD_LIBRARY_PATTERN, self.load_library_action))
 
     @staticmethod
     def get_language():
@@ -43,3 +45,15 @@ class Tensorflow(Language):
                 for _ in native_deps:
                     inc_count()
                 return native_deps
+
+    def load_library_action(self, match, file_path, folder_path, content):
+        all_files = self.get_dependency_extractor(
+        ).get_babelrts().get_change_discoverer().get_all_files()
+        folder = folder_path.rsplit('java', 1)[0] + 'native'
+        native_deps = tuple(
+            file for file in all_files if file.startswith(folder))
+        if native_deps:
+            for _ in native_deps:
+                inc_count()
+            return native_deps
+

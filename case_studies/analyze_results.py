@@ -9,6 +9,7 @@ PYTHON_RESULTS = join(RESULTS, 'tensorflow_python.json')
 JAVA_RESULTS = join(RESULTS, 'tensorflow_java.json')
 ALL_RESULTS = join(RESULTS, 'tensorflow_all.json')
 OUTPUT_CSV = join(RESULTS, 'tensorflow.csv')
+UNSAFE = join(RESULTS, 'tensorflow_unsafe.txt')
 
 RUNS = ('cpp', 'python', 'java', 'all')
 
@@ -54,6 +55,10 @@ def process_commit(commit, cpp_commit, python_commit, java_commit, all_commit):
     commit['P\A'] = len(P_D_A)
     commit['J\A'] = len(J_D_A)
 
+    commit['ilt'] = all_commit['tests']['all']['ilt']
+    commit['iltc'] = all_commit['tests']['all']['iltc']
+    commit['iltco'] = all_commit['tests']['all']['iltco']
+
     commit['C_Time'] = cpp_commit['analysis_time']
     commit['P_Time'] = python_commit['analysis_time']
     commit['J_Time'] = java_commit['analysis_time']
@@ -85,9 +90,19 @@ def save_csv(aggregated_results):
         writer.writerows(aggregated_results)
 
 
+def count_unsafe_commits(aggregated_results):
+    unsafe = 0
+    for commit in aggregated_results:
+        if commit['A\(CUPUJ)'] > 0:
+            unsafe += 1
+    with open(UNSAFE, 'w') as out:
+        out.write(f'{unsafe}/{len(aggregated_results)}')
+
+
 def main():
     results = load_results()
     aggregated_results = aggregate_results(results)
+    count_unsafe_commits(aggregated_results)
     save_csv(aggregated_results)
 
 
