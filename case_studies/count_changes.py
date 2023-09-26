@@ -24,7 +24,7 @@ def count(path, h1, h2):
 
 def save_csv(subject, hashcodes, counts):
     with open(subjects.CHANGES[subject], 'w') as out:
-        out.write(f'hashcode,{subject.JAVA},{subject.PYTHON},{subject.CPP}\n')
+        out.write(f'hashcode,{subjects.JAVA},{subjects.PYTHON},{subjects.CPP}\n')
         for hashcode, count in zip(hashcodes, counts):
             out.write(f'{hashcode},{count[0]},{count[1]},{count[2]}\n')
 
@@ -36,12 +36,12 @@ def main(subject):
     lines = reversed(rc(git_command, repo.path).stdout.split('\n'))
     hashcodes = tuple(hash for hash in lines if hash)
 
-    counts = []
+    counts = [(0, 0, 0)]
     for i in range(len(hashcodes) - 1):
         counts.append(count(repo.path, hashcodes[i], hashcodes[i + 1]))
         print(i, counts[-1])
 
-    save_csv(subject, hashcodes[1:], counts)
+    save_csv(subject, hashcodes, counts)
 
 
 if __name__ == '__main__':

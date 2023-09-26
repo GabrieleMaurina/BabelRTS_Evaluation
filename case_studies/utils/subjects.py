@@ -30,8 +30,8 @@ OPENJDK_CONSECUTIVE_CHANGES = join(RESULTS, 'openjdk_consecutive_changes.csv')
 
 CONSECUTIVE_CHANGES = {TENSORFLOW : TENSORFLOW_CONSECUTIVE_CHANGES, OPENJDK : OPENJDK_CONSECUTIVE_CHANGES}
 
-TENSORFLOW_BEST_WINDOW = 'tensorflow_best_window.csv'
-OPENJDK_BEST_WINDOW = 'openjdk_best_window.csv'
+TENSORFLOW_BEST_WINDOW = 'tensorflow_best_window'
+OPENJDK_BEST_WINDOW = 'openjdk_best_window'
 
 BEST_WINDOW = {TENSORFLOW : TENSORFLOW_BEST_WINDOW, OPENJDK : OPENJDK_BEST_WINDOW}
 
@@ -59,3 +59,10 @@ OPENJDK_RUNS = {
 }
 
 RUNS = {TENSORFLOW : TENSORFLOW_RUNS, OPENJDK : OPENJDK_RUNS}
+
+TENSORFLOW_SRC_FOLDERS = ['tensorflow/core',
+                          'tensorflow/python',
+                          'tensorflow/java/src/main/java',
+                          'tensorflow/java/src/main/native']
+TENSORFLOW_TEST_FOLDERS = ['tensorflow/python/kernel_tests',
+                           'tensorflow/java/src/test/java']

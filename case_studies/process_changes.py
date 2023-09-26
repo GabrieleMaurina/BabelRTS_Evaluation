@@ -34,22 +34,32 @@ def longest_changes(data, languages):
                 best_length = length
         else:
             start = index + 1
-    return best_start, best_length
+    return  data.iloc[best_start].hashcode, best_start, best_length
 
 
-def group_of(data, k):
-    groups = data.groupby(data.index // k)
-    aggregations = {
-        'hashcode': ('hashcode', 'first'),
-        subjects.JAVA: (subjects.JAVA, 'sum'),
-        subjects.PYTHON: (subjects.PYTHON, 'sum'),
-        subjects.CPP: (subjects.CPP, 'sum')
-    }
-    return groups.agg(**aggregations)
+def groups_of(data, k):
+    for i in range(k):
+        groups = data.groupby((data.index + i) // k)
+        aggregations = {
+            'hashcode': ('hashcode', 'first'),
+            subjects.JAVA: (subjects.JAVA, 'sum'),
+            subjects.PYTHON: (subjects.PYTHON, 'sum'),
+            subjects.CPP: (subjects.CPP, 'sum')
+        }
+        yield groups.agg(**aggregations), i
+
+
+def compute_consecutives(subject, data, max_aggregation):
+    consecutives = []
+    for k in progressbar(range(1, max_aggregation + 1)):
+        for group, delta in groups_of(data, k):
+            hashcode, index, length = longest_changes(group, subjects.LANGUAGES[subject])
+            consecutives.append((k, delta, index, length, hashcode))
+    return consecutives
 
 
 def save_consecutives(subject, consecutives):
-    df = pd.DataFrame(consecutives, columns=['k', 'start', 'length'])
+    df = pd.DataFrame(consecutives, columns=['k', 'delta', 'start', 'length', 'hashcode'])
     df.to_csv(subjects.CONSECUTIVE_CHANGES[subject], index=False)
 
 
@@ -58,13 +68,13 @@ def find_best_window(data, languages):
     best_score = -1
     best_hashcodes = None
     n = len(data) - WINDOW_LENGTH
-    for i in progressbar(range(n)):
+    for i in progressbar(range(1, n)):
         window = data.iloc[i:i + WINDOW_LENGTH]
         score = window[languages].sum().min()
         if score > best_score:
             best_score = score
             best_index = i
-            best_hashcodes = tuple(window.hashcode)
+            best_hashcodes = (data.iloc[i - 1].hashcode,) + tuple(window.hashcode)
     return best_index, best_score, best_hashcodes
 
 def save_best_window(subject, best_window):
@@ -75,31 +85,22 @@ def save_best_window(subject, best_window):
     dump(data, subjects.BEST_WINDOW[subject])
 
 
-def compute_consecutives(subject, data):
-    consecutives = []
-    for k in range(1, 100):
-        grouped = group_of(data, k)
-        index, length = longest_changes(grouped, subjects.LANGUAGES[subject])
-        print(k, index, length)
-        consecutives.append((k, index, length))
-    return consecutives
-
-
 def load_changes_csv(subject):
     return pd.read_csv(subjects.CHANGES[subject])
 
 
-def main(subject):
+def main(subject, max_aggregation):
     data = load_changes_csv(subject)
     plot_changes(subject, data)
 
     best_window = find_best_window(data, list(subjects.LANGUAGES[subject]))
     save_best_window(subject, best_window)
 
-    consecutives = compute_consecutives(subject, data)
+    consecutives = compute_consecutives(subject, data, max_aggregation)
     save_consecutives(subject, consecutives)
 
 
 if __name__ == '__main__':
     subject = argv[1]
-    main(subject)
+    max_aggregation = int(argv[2])
+    main(subject, max_aggregation)

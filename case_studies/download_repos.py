@@ -5,9 +5,9 @@ from utils.folder_manager import get_repo, dump
 import utils.subjects as subjects
 
 
-def main(subject, start_commit, commit_size):
+def main(subject, k, delta, start):
     repo = get_repo(subjects.GIT[subject])
-    add_shas(repo, start_commit, commit_size)
+    add_shas(repo, subjects.CHANGES[subject], k, delta, start)
 
     print(repo)
     dump(repo, subjects.META[subject])
@@ -15,6 +15,7 @@ def main(subject, start_commit, commit_size):
 
 if __name__ == '__main__':
     subject = argv[1]
-    start_commit = int(argv[2])
-    commit_size = int(argv[3])
-    main(subject, start_commit, commit_size)
+    k = int(argv[2])
+    delta = int(argv[3])
+    start = int(argv[4])
+    main(subject, k, delta, start)
