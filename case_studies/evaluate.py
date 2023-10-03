@@ -11,24 +11,20 @@ from utils.ilt import count_tests
 from utils.loc import get_loc
 from utils.folder_manager import dump, load
 from utils.run_cmd import rc
-from download_repos import TENSORFLOW_META
+import utils.subjects as subjects
 from simpleobject import simpleobject as so
 from time import time
 from os.path import splitext, basename
 import utils.tensorflow as tf
+import utils.openjdk as openjdk
 from process_changes import load_changes_csv
 
-SRC_FOLDERS = ['tensorflow/core', 'tensorflow/python',
-               'tensorflow/java/src/main/java', 'tensorflow/java/src/main/native']
-TEST_FOLDERS = ['tensorflow/python/kernel_tests',
-                'tensorflow/java/src/test/java']
-
-LANGUAGE_IMPLEMENTATIONS += (tf.Tensorflow,)
+LANGUAGE_IMPLEMENTATIONS += (tf.Tensorflow, openjdk.OpenJDK)
 
 HISTORY_SHAS = 100
 
 def is_test(path):
-    name, extension = splitext(basename(path))
+    name, _ = splitext(basename(path))
     return name.lower().endswith('test')
 
 
@@ -69,28 +65,28 @@ def count_files(babelRTS):
 
 
 def main(subject, run, history):
-    tensorflow = so(load(TENSORFLOW_META))
+    data = so(load(subjects.META[subject]))
     if history:
-        shas = tuple(reversed(load_changes_csv().hashcode.iloc[:HISTORY_SHAS]))
-        tensorflow.shas = shas
+        shas = tuple(reversed(load_changes_csv(subject).hashcode.iloc[:HISTORY_SHAS]))
+        data.shas = shas
 
-    languages = RUNS[run]
+    languages = subjects.RUNS[subject][run]
     implementations = []
     for implementation in LANGUAGE_IMPLEMENTATIONS:
-        if implementation.get_language() in RUNS[run]:
+        if implementation.get_language() in languages:
             implementations.append(implementation)
 
-    babelRTS = BabelRTS(tensorflow['path'], SRC_FOLDERS,
-                        TEST_FOLDERS, None, languages, implementations)
+    babelRTS = BabelRTS(data['path'], subjects.SRC_FOLDERS[subject],
+                        subjects.TEST_FOLDERS[subject], None, languages, implementations)
 
-    tensorflow.commits = []
-    for index, sha in enumerate(tensorflow.shas):
+    data.commits = []
+    for index, sha in enumerate(data.shas):
         print(sha)
-        rc(f'git checkout {sha}', tensorflow.path)
+        rc(f'git checkout {sha}', data.path)
         if index:
             commit = so()
             commit.sha = sha
-            tensorflow.commits.append(commit)
+            data.commits.append(commit)
             tf.reset_count()
             t = time()
             babelRTS.get_change_discoverer().explore_codebase()
@@ -98,11 +94,9 @@ def main(subject, run, history):
             babelRTS.get_dependency_extractor().generate_dependency_graph()
             babelRTS.get_test_selector().select_tests()
             commit.analysis_time = time() - t
-
             commit.files = count_files(babelRTS)
-
             commit.loc = get_loc(
-                tensorflow.path, babelRTS.get_change_discoverer().get_all_files())
+                data.path, babelRTS.get_change_discoverer().get_all_files())
             commit.ild = tf.get_count()
             commit.tests = count_tests(babelRTS)
             commit.deps = sum(len(v) for v in babelRTS.get_dependency_extractor(
@@ -112,7 +106,7 @@ def main(subject, run, history):
         else:
             babelRTS.rts()
 
-    dump(tensorflow, f'tensorflow_{"history_" if history else ""}' + run)
+    dump(data, f'{subject}_{"history_" if history else ""}' + run)
 
 
 if __name__ == '__main__':

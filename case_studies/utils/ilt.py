@@ -1,5 +1,6 @@
 from collections import deque
 from simpleobject import simpleobject as so
+import utils.subjects as subjects
 
 
 LANGUAGES = ('python', 'java', 'cpp')
@@ -7,10 +8,10 @@ LANGUAGES = ('python', 'java', 'cpp')
 
 def get_language(ext):
     if ext == 'py':
-        return 'python'
+        return subjects.PYTHON
     elif ext == 'java':
-        return 'java'
-    return 'cpp'
+        return subjects.JAVA
+    return subjects.CPP
 
 
 def different_language(ext1, ext2):
@@ -19,17 +20,17 @@ def different_language(ext1, ext2):
 
 def count_tests(babelRTS):
     tests = so()
-    for langauge in LANGUAGES:
-        tests[langauge] = count_tests_langauge(babelRTS, langauge)
+    for language in LANGUAGES:
+        tests[language] = count_tests_language(babelRTS, language)
     tests.all = so(ilt=0, iltc=0, iltco=0)
-    for langauge in LANGUAGES:
-        tests.all.ilt += tests[langauge].ilts
-        tests.all.iltc += tests[langauge].iltcs
-        tests.all.iltco += tests[langauge].iltcos
+    for language in LANGUAGES:
+        tests.all.ilt += tests[language].ilts
+        tests.all.iltc += tests[language].iltcs
+        tests.all.iltco += tests[language].iltcos
     return tests
 
 
-def count_tests_langauge(babelRTS, langauge):
+def count_tests_language(babelRTS, language):
     ilt = set()
     iltc = set()
     iltcno = set()
@@ -39,7 +40,7 @@ def count_tests_langauge(babelRTS, langauge):
     dependency_graph = babelRTS.get_dependency_extractor().get_dependency_graph()
     for test_file in test_files:
         ext = test_file.rsplit('.', 1)[-1]
-        if langauge != get_language(ext):
+        if language != get_language(ext):
             continue
         if test_file in dependency_graph:
             queue = deque(dependency_graph[test_file])
@@ -58,6 +59,6 @@ def count_tests_langauge(babelRTS, langauge):
                 if file in dependency_graph:
                     queue.extend(dependency_graph[file])
 
-    iltco = iltc - iltcno
+    iltco = iltc - iltcno - changed_files
 
     return so(ilts=len(ilt), iltcs=len(iltc), iltcos=len(iltco))

@@ -66,3 +66,6 @@ TENSORFLOW_SRC_FOLDERS = ['tensorflow/core',
                           'tensorflow/java/src/main/native']
 TENSORFLOW_TEST_FOLDERS = ['tensorflow/python/kernel_tests',
                            'tensorflow/java/src/test/java']
+
+SRC_FOLDERS = {TENSORFLOW : TENSORFLOW_SRC_FOLDERS}
+TEST_FOLDERS = {TENSORFLOW : TENSORFLOW_TEST_FOLDERS}
