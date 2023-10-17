@@ -1,4 +1,6 @@
-from os.path import join
+from os.path import join, relpath
+from os import walk, sep
+from re import compile as cmp_re
 
 RESULTS = 'results'
 
@@ -67,8 +69,65 @@ TENSORFLOW_SRC_FOLDERS = ['tensorflow/core',
 TENSORFLOW_TEST_FOLDERS = ['tensorflow/python/kernel_tests',
                            'tensorflow/java/src/test/java']
 
-SRC_FOLDERS = {TENSORFLOW : TENSORFLOW_SRC_FOLDERS}
-TEST_FOLDERS = {TENSORFLOW : TENSORFLOW_TEST_FOLDERS}
+def get_tensorflow_src_folders():
+    return TENSORFLOW_SRC_FOLDERS
+
+def get_tensorflow_test_folders():
+    return TENSORFLOW_TEST_FOLDERS
+
+def get_openjdk_folders(path, type):
+    for root, dirs, _ in walk(path):
+        if type in dirs:
+            yield join(root, type)
+
+OPENJDK_PATH = join('repos', 'jdk')
+
+def get_openjdk_src_folders():
+    main_source_folder = join(OPENJDK_PATH, 'src')
+
+    java = get_openjdk_folders(main_source_folder, 'classes')
+    native = get_openjdk_folders(main_source_folder, 'native')
+
+    java_source_folders = tuple(relpath(source_folder, OPENJDK_PATH) for source_folder in java)
+    native_source_folders = tuple(relpath(source_folder, OPENJDK_PATH) for source_folder in native)
+
+    return java_source_folders + native_source_folders
+
+PACKAGE_PATTERN = cmp_re(r'\bpackage\s+(\S+)\s*;')
+
+def safe_read(file):
+    try:
+        with open(file, 'r') as content:
+            return content.read()
+    except Exception:
+        encodings = ('utf8', 'unicode_escape', 'ascii', 'cp932')
+        for encoding in encodings:
+            try:
+                with open(file, 'r', encoding=encoding) as content:
+                    return content.read()
+            except Exception:
+                pass
+    raise UnicodeError(f'Unable to read {file}')
+
+def get_openjdk_test_folders():
+    main_test_folder = join(OPENJDK_PATH, 'test')
+    test_folders = {'test'}
+    for root, _, files in walk(main_test_folder):
+        for file in files:
+            if file.endswith('.java'):
+                path = join(root, file)
+                content = safe_read(path)
+                package = PACKAGE_PATTERN.search(content)
+                if package:
+                    package = package.group(1)
+                    package_path = package.replace('.', sep)
+                    if root.endswith(package_path):
+                        folder = relpath(root[:-len(package_path)], OPENJDK_PATH)
+                        test_folders.add(folder)
+    return tuple(test_folders)
+
+SRC_FOLDERS = {TENSORFLOW : get_tensorflow_src_folders, OPENJDK : get_openjdk_src_folders}
+TEST_FOLDERS = {TENSORFLOW : get_tensorflow_test_folders, OPENJDK : get_openjdk_test_folders}
 
 JSON = {subject: {run: {history: join(RESULTS, f'{subject}{"_history" if history else ""}_{run}.json') for history in (True, False)} for run in runs} for subject, runs in RUNS.items()}
 

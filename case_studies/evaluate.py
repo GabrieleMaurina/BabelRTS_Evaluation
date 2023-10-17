@@ -74,13 +74,16 @@ def main(subject, run, history):
     for implementation in LANGUAGE_IMPLEMENTATIONS:
         if implementation.get_language() in languages:
             implementations.append(implementation)
+        
+    src_folders = subjects.SRC_FOLDERS[subject]()
+    test_folders = subjects.TEST_FOLDERS[subject]()
 
-    babelRTS = BabelRTS(data['path'], subjects.SRC_FOLDERS[subject],
-                        subjects.TEST_FOLDERS[subject], None, languages, implementations)
+    babelRTS = BabelRTS(data['path'], src_folders, test_folders, None, languages, implementations)
 
     data.commits = []
-    for index, sha in progressbar(enumerate(data.shas), max_value=len(data.shas), redirect_stdout=True):
-        print(sha)
+    print('starting loop')
+    for index, sha in progressbar(enumerate(data.shas), max_value=len(data.shas)):
+        print('\nchecking out', sha)
         rc(f'git checkout {sha}', data.path)
         if index:
             commit = so()
@@ -88,11 +91,16 @@ def main(subject, run, history):
             data.commits.append(commit)
             tf.reset_count()
             t = time()
+            print('exploring codebase')
             babelRTS.get_change_discoverer().explore_codebase()
+            print('checking additional tests')
             check_additional_tests(babelRTS.get_change_discoverer())
+            print('generating dependency graph')
             babelRTS.get_dependency_extractor().generate_dependency_graph()
+            print('selecting tests')
             babelRTS.get_test_selector().select_tests()
             commit.analysis_time = time() - t
+            print('computing stats')
             commit.files = count_files(babelRTS)
             commit.loc = get_loc(
                 data.path, babelRTS.get_change_discoverer().get_all_files())
@@ -102,8 +110,10 @@ def main(subject, run, history):
             ).get_dependency_graph().values())
             commit.selected_tests = tuple(
                 babelRTS.get_test_selector().get_selected_tests())
+            print('completed')
         else:
-            babelRTS.rts()
+            print('initializing babelrts')
+            babelRTS.rts(True)
 
     dump(data, f'{subject}_{"history_" if history else ""}' + run)
 
