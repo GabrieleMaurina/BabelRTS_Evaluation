@@ -18,10 +18,9 @@ from os.path import splitext, basename
 import utils.tensorflow as tf
 import utils.openjdk as openjdk
 from process_changes import load_changes_csv
+from progressbar import progressbar
 
 LANGUAGE_IMPLEMENTATIONS += (tf.Tensorflow, openjdk.OpenJDK)
-
-HISTORY_SHAS = 100
 
 def is_test(path):
     name, _ = splitext(basename(path))
@@ -67,7 +66,7 @@ def count_files(babelRTS):
 def main(subject, run, history):
     data = so(load(subjects.META[subject]))
     if history:
-        shas = tuple(reversed(load_changes_csv(subject).hashcode.iloc[:HISTORY_SHAS]))
+        shas = tuple(load_changes_csv(subject).hashcode.iloc[-history-1:])
         data.shas = shas
 
     languages = subjects.RUNS[subject][run]
@@ -80,7 +79,7 @@ def main(subject, run, history):
                         subjects.TEST_FOLDERS[subject], None, languages, implementations)
 
     data.commits = []
-    for index, sha in enumerate(data.shas):
+    for index, sha in progressbar(enumerate(data.shas), max_value=len(data.shas), redirect_stdout=True):
         print(sha)
         rc(f'git checkout {sha}', data.path)
         if index:
@@ -111,5 +110,5 @@ def main(subject, run, history):
 
 if __name__ == '__main__':
     subject, run  = argv[1:3]
-    history = argv[3] == 'history' if len(argv) > 3 else False
+    history = int(argv[3]) if len(argv) > 3 else None
     main(subject, run, history)

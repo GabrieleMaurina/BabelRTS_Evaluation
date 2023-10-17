@@ -69,3 +69,11 @@ TENSORFLOW_TEST_FOLDERS = ['tensorflow/python/kernel_tests',
 
 SRC_FOLDERS = {TENSORFLOW : TENSORFLOW_SRC_FOLDERS}
 TEST_FOLDERS = {TENSORFLOW : TENSORFLOW_TEST_FOLDERS}
+
+JSON = {subject: {run: {history: join(RESULTS, f'{subject}{"_history" if history else ""}_{run}.json') for history in (True, False)} for run in runs} for subject, runs in RUNS.items()}
+
+AGGREGATED_CSV = {subject: {history: join(RESULTS, f'{subject}{"_history" if history else ""}.csv') for history in (True, False)} for subject in META}
+
+STATS = {subject: {history: join(RESULTS, f'{subject}_stats{"_history" if history else ""}.txt') for history in (True, False)} for subject in META}
+
+OUTPUT = {subject: {history: join(RESULTS, f'{subject}{"_history" if history else ""}.csv') for history in (True, False)} for subject in META}

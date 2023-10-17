@@ -42,6 +42,8 @@ def count_tests_language(babelRTS, language):
         ext = test_file.rsplit('.', 1)[-1]
         if language != get_language(ext):
             continue
+        if test_file in changed_files:
+            iltcno.add(test_file)
         if test_file in dependency_graph:
             queue = deque(dependency_graph[test_file])
             visited = set((test_file,))
@@ -59,6 +61,5 @@ def count_tests_language(babelRTS, language):
                 if file in dependency_graph:
                     queue.extend(dependency_graph[file])
 
-    iltco = iltc - iltcno - changed_files
-
+    iltco = iltc - iltcno
     return so(ilts=len(ilt), iltcs=len(iltc), iltcos=len(iltco))

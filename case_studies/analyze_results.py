@@ -1,29 +1,16 @@
-from os.path import join
 from json import load
 from csv import DictWriter
+from sys import argv
+
+from utils import subjects as subjects
 
 
-RESULTS = 'results'
-CPP_RESULTS = join(RESULTS, 'tensorflow_c++.json')
-PYTHON_RESULTS = join(RESULTS, 'tensorflow_python.json')
-JAVA_RESULTS = join(RESULTS, 'tensorflow_java.json')
-ALL_RESULTS = join(RESULTS, 'tensorflow_all.json')
-OUTPUT_CSV = join(RESULTS, 'tensorflow.csv')
-UNSAFE = join(RESULTS, 'tensorflow_unsafe.txt')
-
-RUNS = ('cpp', 'python', 'java', 'all')
-
-
-def load_results():
+def load_results(subject, history):
     results = {}
-    with open(CPP_RESULTS, 'r') as f:
-        results['cpp'] = load(f)
-    with open(PYTHON_RESULTS, 'r') as f:
-        results['python'] = load(f)
-    with open(JAVA_RESULTS, 'r') as f:
-        results['java'] = load(f)
-    with open(ALL_RESULTS, 'r') as f:
-        results['all'] = load(f)
+    for run in subjects.RUNS[subject]:
+        json = subjects.JSON[subject][run][history]
+        with open(json, 'r') as f:
+            results[run] = load(f)
     return results
 
 
@@ -68,9 +55,9 @@ def process_commit(commit, cpp_commit, python_commit, java_commit, all_commit):
         java_commit['analysis_time']
 
 
-def aggregate_results(results):
+def aggregate_results(subject, results):
     aggregate_results = []
-    commits_data = tuple(results[run]['commits'] for run in RUNS)
+    commits_data = tuple(results[run]['commits'] for run in subjects.RUNS[subject])
     for cpp_commit, python_commit, java_commit, all_commit in zip(*commits_data):
         shas = (cpp_commit['sha'], python_commit['sha'],
                 java_commit['sha'], all_commit['sha'])
@@ -83,28 +70,46 @@ def aggregate_results(results):
     return aggregate_results
 
 
-def save_csv(aggregated_results):
-    with open(OUTPUT_CSV, 'w', newline='') as f:
+def save_csv(subject, history, aggregated_results):
+    with open(subjects.OUTPUT[subject][history], 'w', newline='') as f:
         writer = DictWriter(f, fieldnames=aggregated_results[0].keys())
         writer.writeheader()
         writer.writerows(aggregated_results)
 
 
-def count_unsafe_commits(aggregated_results):
+def compute_stats(subject, history, aggregated_results):
     unsafe = 0
+    faster = 0
+    wrong_iltco = []
     for commit in aggregated_results:
         if commit['A\(CUPUJ)'] > 0:
             unsafe += 1
-    with open(UNSAFE, 'w') as out:
-        out.write(f'{unsafe}/{len(aggregated_results)}')
+        if commit['A_Time'] < commit['CUPUJ_Time']:
+            faster += 1
+        if commit['A\(CUPUJ)'] != commit['iltco']:
+            wrong_iltco.append(commit)
+    with open(subjects.STATS[subject][history], 'w') as out:
+        out.write(f'Unsafe: {unsafe}/{len(aggregated_results)}\n')
+        out.write(f'Faster: {faster}/{len(aggregated_results)}\n')
+        if wrong_iltco:
+            out.write(f'A\(CUPUJ) != iltco : {len(wrong_iltco)}\n')
+            for commit in wrong_iltco:
+                out.write(commit['sha'])
+                out.write(',')
+                out.write(str(commit['A\\(CUPUJ)']))
+                out.write(',')
+                out.write(str(commit['iltco']))
+                out.write('\n')
 
 
-def main():
-    results = load_results()
-    aggregated_results = aggregate_results(results)
-    count_unsafe_commits(aggregated_results)
-    save_csv(aggregated_results)
+def main(subject, history):
+    results = load_results(subject, history)
+    aggregated_results = aggregate_results(subject, results)
+    compute_stats(subject, history, aggregated_results)
+    save_csv(subject, history, aggregated_results)
 
 
 if __name__ == '__main__':
-    main()
+    subject = argv[1]
+    history = len(argv) > 2 and argv[2] == 'history'
+    main(subject, history)
