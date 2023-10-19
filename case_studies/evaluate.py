@@ -105,7 +105,8 @@ def main(subject, run, history):
             commit.loc = get_loc(
                 data.path, babelRTS.get_change_discoverer().get_all_files())
             commit.ild = tf.get_count()
-            commit.tests = count_tests(babelRTS)
+            if run == subjects.ALL:
+                commit.tests = count_tests(babelRTS)
             commit.deps = sum(len(v) for v in babelRTS.get_dependency_extractor(
             ).get_dependency_graph().values())
             commit.selected_tests = tuple(
