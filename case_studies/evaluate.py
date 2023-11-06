@@ -74,7 +74,8 @@ def main(subject, run, history):
     for implementation in LANGUAGE_IMPLEMENTATIONS:
         if implementation.get_language() in languages:
             implementations.append(implementation)
-        
+
+    print('collecting folders')
     src_folders = subjects.SRC_FOLDERS[subject]()
     test_folders = subjects.TEST_FOLDERS[subject]()
 
