@@ -87,7 +87,7 @@
   },
   {
     "name":"Python",
-    "skip":true,
+    "skip":false,
     "revs":20,
     "changed_files":3,
     "languages":[
@@ -112,7 +112,8 @@
         "test_folder":"test"
       },
       {
-        "url":"https://github.com/tflearn/tflearn"
+        "url":"https://github.com/tflearn/tflearn",
+        "starting_commit":"9d48f42c63f629dd65202b9666b1dfdf5a64bda6"
       },
       {
         "url":"https://github.com/mementum/backtrader"
@@ -134,10 +135,6 @@
         "test_folder":"tests/unit"
       },
       {
-        "url":"https://github.com/python-trio/trio",
-        "test_folder":"trio/tests"
-      },
-      {
         "url":"https://github.com/PyCQA/isort",
         "test_folder":"tests/unit"
       },
@@ -148,7 +145,7 @@
   },
   {
     "name":"JavaScript",
-    "skip":true,
+    "skip":false,
     "revs":20,
     "changed_files":3,
     "languages":[
@@ -180,11 +177,6 @@
       {
         "url":"https://github.com/jest-community/jest-junit",
         "test_folder":"__tests__"
-      },
-      {
-        "url":"https://github.com/borela-tech/js-toolbox",
-        "src_folder":"src",
-        "test_folder":"src/__tests__"
       },
       {
         "url":"https://github.com/josdejong/mathjs"
@@ -238,6 +230,13 @@
       },
       {
         "url":"https://github.com/OpenZeppelin/openzeppelin-contracts"
+      },
+      {
+        "url":"https://github.com/borela-tech/js-toolbox",
+        "src_folder":"src",
+        "test_folder":"src/__tests__",
+        "skip_pull": true,
+        "branch": "master"
       }
     ]
   }

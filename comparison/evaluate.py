@@ -2,6 +2,7 @@
 
 from json import load
 from os.path import isdir, join
+from os import mkdir
 from traceback import print_exc
 from time import time
 from sys import argv, path
@@ -11,7 +12,7 @@ from withcd import cd
 from utils.run_cmd import rc
 from utils.java_evaluation import build_java_project, run_junit_tests, run_ekstazi_tests, run_hyrts_tests, run_babelrts_java_tests
 from utils.python_evaluation import run_pytest_tests, run_pytestrts_tests, run_babelrts_python_tests
-from utils.javascript_evaluation import run_jest_tests, run_babelrts_javascript_tests
+from utils.javascript_evaluation import run_jest_tests, run_babelrts_javascript_tests, build_javascript_project
 from utils.save_experiment import save_experiment
 from babelrts import BabelRTS
 
@@ -58,8 +59,14 @@ def download_repos(experiment):
             if not isdir(r.name):
                 rc(f'git clone {r.git}')
             with cd(r.name):
-                r.branch = get_branch()
-                rc(f'rm {BABELRTS_FILE} ; git clean -fd ; git reset --hard ; git checkout {r.branch} ; git pull')
+                if 'branch' not in r:
+                    r.branch = get_branch()
+                if 'skip_pull' in r:
+                    skip_pull = r.skip_pull
+                else:
+                    skip_pull = False
+                pull = '' if skip_pull else'; git pull'
+                rc(f'rm {BABELRTS_FILE} ; git clean -fd ; git reset --hard ; git checkout {r.branch} {pull}')
                 try: rc(f'git checkout {r.starting_commit}')
                 except Exception: pass
                 r.commits = get_commits(experiment.revs, experiment.changed_files, experiment.extensions)
