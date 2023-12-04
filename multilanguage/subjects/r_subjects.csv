@@ -1,0 +1,11 @@
+url,test_folder,source_folder
+https://github.com/mixOmicsTeam/mixOmics.git,tests/testthat,R
+https://github.com/r-lib/testthat.git,tests/testthat,R
+https://github.com/r-lib/roxygen2.git,tests/testthat,R
+https://github.com/r-lib/devtools.git,tests/testthat,R
+https://github.com/r-lib/pkgdown.git,tests/testthat,R
+https://github.com/LudvigOlsen/xpectr.git,tests/testthat,R
+https://github.com/bradleyboehmke/unit-testing-r.git,tests/testthat,R
+https://github.com/ropensci-review-tools/autotest.git,tests/testthat,R
+https://github.com/socialresearchcentre/testdat.git,tests/testthat,R
+https://github.com/rstudio/shinytest2.git,tests/testthat,R
