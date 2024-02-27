@@ -31,6 +31,8 @@ def count_tests(babelRTS):
 
 
 def count_tests_language(babelRTS, language):
+    return so(ilts=0, iltcs=0, iltcos=0)
+
     ilt = set()
     iltc = set()
     iltcno = set()
