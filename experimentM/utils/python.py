@@ -3,6 +3,7 @@ from re import compile
 
 FAILURES = compile(r'(\d+) failed')
 
+
 class Python(Language):
     def test(self, tests=None):
         if tests:
