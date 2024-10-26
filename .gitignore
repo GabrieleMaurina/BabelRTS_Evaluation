@@ -1,6 +1,7 @@
 repos
 plots
 results
+tables
 __pycache__
 .babelrts
 /BugsInPy/
