@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-from sys import path, argv
-path.append('../../BabelRTS')
+from sys import argv
 from babelrts import BabelRTS
 from os.path import isdir, join, basename, relpath
 from glob import glob
@@ -38,7 +37,9 @@ BABELRTS_FILE = '.babelrts'
 
 EXCLUDED = ('node_modules',)
 
-DATA_KEYS = ('mutants', 'valid_mutants', 'suite_killed', 'babelrts_killed', 'suite_failed', 'babelrts_failed')
+DATA_KEYS = ('mutants', 'valid_mutants', 'suite_killed',
+             'babelrts_killed', 'suite_failed', 'babelrts_failed')
+
 
 def init(subjects_file):
     print('***COLLECTING SUBJECTS DATA***')
@@ -57,12 +58,14 @@ def init(subjects_file):
         print(subject)
     return subjects
 
+
 def get_branch(path):
     HEAD_BRANCH = '  HEAD branch: '
     for line in rc('git remote show origin', cwd=path).stdout.split('\n'):
         if line.startswith(HEAD_BRANCH):
-            return line.replace(HEAD_BRANCH,'')
+            return line.replace(HEAD_BRANCH, '')
     raise ValueError('Unable to determine main branch')
+
 
 def clone_subjects(subjects):
     print('***CLONING REPOS***')
@@ -75,35 +78,43 @@ def clone_subjects(subjects):
         subject.branch = get_branch(subject.path)
         rc(f'rm {BABELRTS_FILE} ; git clean -fd ; git reset --hard ; git checkout {subject.branch} ; git pull', subject.path)
 
+
 def get_shas(subjects, n_revs):
     print('***GETTING SHAS***')
     for subject in subjects:
-        shas = rc(f'git --no-pager log --first-parent --pretty=tformat:"%H" --max-count={n_revs}', subject.path)
+        shas = rc(
+            f'git --no-pager log --first-parent --pretty=tformat:"%H" --max-count={n_revs}', subject.path)
         if shas.returncode:
             raise Exception(f'Unable to get shas for {subject.url}')
-        subject.shas = tuple(reversed(tuple(sha for sha in shas.stdout.split('\n') if sha)))
+        subject.shas = tuple(
+            reversed(tuple(sha for sha in shas.stdout.split('\n') if sha)))
+
 
 def get_loc(root, files):
     if files:
         K = 100
         files = tuple(files)
-        partition = (files[i:i+K] for i in range(0, len(files), K))
+        partition = (files[i:i + K] for i in range(0, len(files), K))
+
         def loc(paths):
             return int(rc(f'wc -l ' + ' '.join(paths), root).stdout.split('\n')[-2].rsplit(' ', 1)[0])
         return sum(loc(paths) for paths in partition)
     else:
         return 0
 
+
 def get_loc_nfiles(subject, babelRTS):
     all_files = babelRTS.get_change_discoverer().get_all_files()
     subject.loc = get_loc(subject.path, all_files)
     subject.nfiles = len(all_files)
+
 
 def log(subject):
     for key in DATA_KEYS:
         name = ' '.join(v.capitalize() for v in key.split('_'))
         print(f'{name}: {subject[key]} \t', end='')
     print()
+
 
 def run(subjects, languages):
     print('***RUNNING***')
@@ -119,7 +130,8 @@ def run(subjects, languages):
         subject.missed = []
         language.set_project_folder(subject.path)
         language.set_test_folder(subject.test_folder)
-        babelRTS = BabelRTS(subject.path, subject.source_folder, subject.test_folder, EXCLUDED, languages)
+        babelRTS = BabelRTS(subject.path, subject.source_folder,
+                            subject.test_folder, EXCLUDED, languages)
         for i, sha in enumerate(subject.shas):
             print(sha)
             if rc(f'git checkout {sha}', subject.path).returncode:
@@ -141,14 +153,16 @@ def run(subjects, languages):
                     if suite_failures:
                         subject.suite_killed += 1
                         subject.suite_failed += suite_failures
-                        babelRTS.get_change_discoverer().set_changed_files({changed_file})
+                        babelRTS.get_change_discoverer(
+                        ).set_changed_files({changed_file})
                         selected_tests = babelRTS.get_test_selector().select_tests()
                         babelrts_failures = None
                         if selected_tests:
                             babelrts_failures = language.test(selected_tests)
                             if babelrts_failures:
                                 subject.babelrts_killed += 1
-                                subject.babelrts_failed += min(babelrts_failures, suite_failures)
+                                subject.babelrts_failed += min(
+                                    babelrts_failures, suite_failures)
                         if babelrts_failures != suite_failures:
                             missed = so()
                             subject.missed.append(missed)
@@ -160,12 +174,14 @@ def run(subjects, languages):
                             missed.selected_tests = tuple(selected_tests)
                         log(subject)
 
+
 def save_results(subjects, languages):
     print('***SAVING RESULTS***')
     if not isdir(RESULTS_FOLDER):
         mkdir(RESULTS_FOLDER)
     with open(join(RESULTS_FOLDER, '_'.join(languages) + '_results.csv'), 'w') as out:
-        out.write('subject,sha,loc,nfiles,mutants,valid_mutants,suite_killed,babelrts_killed,suite_failed,babelrts_failed\n')
+        out.write(
+            'subject,sha,loc,nfiles,mutants,valid_mutants,suite_killed,babelrts_killed,suite_failed,babelrts_failed\n')
         for subject in subjects:
             values = []
             values.append(subject.name)
@@ -182,6 +198,7 @@ def save_results(subjects, languages):
     with open(join(RESULTS_FOLDER, '_'.join(languages) + '_results.json'), 'w') as out:
         dump(subjects, out, indent=2)
 
+
 def main():
     for subjects_file in sorted(glob(join(argv[1] if len(argv) > 1 else SUBJECTS_FOLDER, '*_subjects.csv'))):
         languages = basename(subjects_file).split('_')[:-1]
@@ -192,6 +209,7 @@ def main():
             get_shas(subjects, int(argv[2]) if len(argv) > 2 else N_REV)
             run(subjects, languages)
             save_results(subjects, languages)
+
 
 if __name__ == '__main__':
     main()

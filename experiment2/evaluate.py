@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-from sys import path, argv
-path.append('../../BabelRTS')
+from sys import argv
 from babelrts import BabelRTS
 from os.path import isdir, join, basename
 from glob import glob
@@ -24,8 +23,10 @@ REPOS_FOLDER = 'repos'
 
 BABELRTS_FILE = '.babelrts'
 
+
 def rc(cmd, cwd):
     return run(cmd, cwd=cwd, shell=True, capture_output=True, text=True)
+
 
 def init(subjects_file):
     print('***COLLECTING SUBJECTS DATA***')
@@ -44,12 +45,14 @@ def init(subjects_file):
         print(subject)
     return subjects
 
+
 def get_branch(path):
     HEAD_BRANCH = '  HEAD branch: '
     for line in rc('git remote show origin', cwd=path).stdout.split('\n'):
         if line.startswith(HEAD_BRANCH):
-            return line.replace(HEAD_BRANCH,'')
+            return line.replace(HEAD_BRANCH, '')
     raise ValueError('Unable to determine main branch')
+
 
 def clone_subjects(subjects):
     print('***CLONING REPOS***')
@@ -62,42 +65,51 @@ def clone_subjects(subjects):
         subject.branch = get_branch(subject.path)
         rc(f'rm {BABELRTS_FILE} ; git clean -fd ; git reset --hard ; git checkout {subject.branch} ; git pull', subject.path)
 
+
 def get_shas(subjects):
     print('***GETTING SHAS***')
     for subject in subjects:
-        shas = rc(f'git --no-pager log --first-parent --pretty=tformat:"%H" --max-count={TOT_REV}', subject.path)
+        shas = rc(
+            f'git --no-pager log --first-parent --pretty=tformat:"%H" --max-count={TOT_REV}', subject.path)
         if shas.returncode:
             raise Exception(f'Unable to get shas for {subject.url}')
-        subject.shas = tuple(reversed(tuple(sha for sha in shas.stdout.split('\n') if sha)))
+        subject.shas = tuple(
+            reversed(tuple(sha for sha in shas.stdout.split('\n') if sha)))
+
 
 def get_loc_nfiles(subjects, languages):
     print('***GETTING LOC AND NFILES***')
-    extensions = BabelRTS(languages=languages).get_dependency_extractor().get_extensions()
+    extensions = BabelRTS(
+        languages=languages).get_dependency_extractor().get_extensions()
     for subject in subjects:
         subject.loc = subject.nfiles = 0
         for extension in extensions:
-            subject.loc += int(rc(f'( find . -name "*.{extension}" -print0 | xargs -0 cat ) | wc -l', subject.path).stdout)
-            subject.nfiles += int(rc(f'find . -name "*.{extension}" | wc -l', subject.path).stdout)
+            subject.loc += int(
+                rc(f'( find . -name "*.{extension}" -print0 | xargs -0 cat ) | wc -l', subject.path).stdout)
+            subject.nfiles += int(
+                rc(f'find . -name "*.{extension}" | wc -l', subject.path).stdout)
+
 
 def count_dependencies(babelRTS):
     deps = 0
     ild = 0
     dependency_graph = babelRTS.get_dependency_extractor().get_dependency_graph()
     for file, dependencies in dependency_graph.items():
-        ext1 = file.rsplit('.',1)[-1]
+        ext1 = file.rsplit('.', 1)[-1]
         for dependency in dependencies:
             deps += 1
-            ext2 = dependency.rsplit('.',1)[-1]
+            ext2 = dependency.rsplit('.', 1)[-1]
             if ext1 != ext2:
                 ild += 1
     return deps, ild
+
 
 def count_ilts(babelRTS):
     ilts = 0
     test_files = babelRTS.get_change_discoverer().get_test_files()
     dependency_graph = babelRTS.get_dependency_extractor().get_dependency_graph()
     for test_file in test_files:
-        ext = test_file.rsplit('.',1)[-1]
+        ext = test_file.rsplit('.', 1)[-1]
         if test_file in dependency_graph:
             queue = deque(dependency_graph[test_file])
             visited = set()
@@ -106,12 +118,13 @@ def count_ilts(babelRTS):
                 if file in visited:
                     continue
                 visited.add(file)
-                if ext != file.rsplit('.',1)[-1]:
+                if ext != file.rsplit('.', 1)[-1]:
                     ilts += 1
                     break
                 if file in dependency_graph:
                     queue.extend(dependency_graph[file])
     return ilts
+
 
 def run_babelrts(subjects, languages):
     print('***RUNNING BABELRTS***')
@@ -125,7 +138,8 @@ def run_babelrts(subjects, languages):
             subject.deps = []
             subject.ilds = []
             subject.ilts = []
-        babelRTS = BabelRTS(subject.path, subject.source_folder, subject.test_folder, languages=languages)
+        babelRTS = BabelRTS(subject.path, subject.source_folder,
+                            subject.test_folder, languages=languages)
         first = True
         for sha in subject.shas:
             if rc(f'git checkout {sha}', subject.path).returncode:
@@ -138,9 +152,11 @@ def run_babelrts(subjects, languages):
             else:
                 subject.times.append(t)
                 test_files = babelRTS.get_change_discoverer().get_test_files()
-                reduction = (1 - len(selected_tests)/len(test_files)) if test_files else 1
+                reduction = (1 - len(selected_tests) /
+                             len(test_files)) if test_files else 1
                 subject.reductions.append(reduction)
-                subject.changed.append(len(babelRTS.get_change_discoverer().get_changed_files()))
+                subject.changed.append(
+                    len(babelRTS.get_change_discoverer().get_changed_files()))
                 if ild:
                     deps, ilds = count_dependencies(babelRTS)
                     subject.deps.append(deps)
@@ -152,6 +168,7 @@ def run_babelrts(subjects, languages):
         if ild:
             subject.avg_deps = mean(subject.deps)
             subject.avg_ilds = mean(subject.ilds)
+
 
 def save_results(subjects, languages):
     print('***SAVING RESULTS***')
@@ -165,11 +182,13 @@ def save_results(subjects, languages):
         else:
             out.write('\n')
         for subject in subjects:
-            out.write(f'{subject.name},{subject.shas[-1]},{subject.loc},{subject.nfiles},{subject.avg_changed},{subject.avg_reduction},{subject.avg_time}')
+            out.write(
+                f'{subject.name},{subject.shas[-1]},{subject.loc},{subject.nfiles},{subject.avg_changed},{subject.avg_reduction},{subject.avg_time}')
             if ild:
                 out.write(f',{subject.avg_deps},{subject.avg_ilds}\n')
             else:
                 out.write('\n')
+
 
 def main():
     experiments = tuple(languages.lower().split('_') for languages in argv[1:])
@@ -183,6 +202,7 @@ def main():
             get_loc_nfiles(subjects, languages)
             run_babelrts(subjects, languages)
             save_results(subjects, languages)
+
 
 if __name__ == '__main__':
     main()
