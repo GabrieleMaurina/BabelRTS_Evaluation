@@ -12,6 +12,7 @@ import traceback
 
 
 import babelrts
+import utils.folders
 
 
 DIR = os.path.normpath(os.path.dirname(__file__))
@@ -60,12 +61,6 @@ def load_data(args):
     data['versions'] = data['versions'].apply(expand_versions)
     if args.identifier:
         data = data[data['id'].isin(args.identifier)]
-    return data
-
-
-def load_folders():
-    data = pandas.read_csv(DEFECTS4J_SRC_TEST_CSV, dtype={'version': str})
-    data['version'] = data['version'].fillna('')
     return data
 
 
@@ -166,37 +161,6 @@ def run_rts(id, version, failing_tests, src, test):
     print(f'\t\t{detected}, {tot_time}, {test_suite_reduction}')
 
 
-def get_folders(folders, project, version):
-    rows = folders[folders['identifier'] == project]
-    for row in rows.itertuples():
-        if not row.version:
-            return row.src, row.test
-        try:
-            if row.version.startswith('-'):
-                raise ValueError
-            value = int(row.version)
-        except ValueError:
-            values = row.version.split('-')
-            start = int(values[0]) if values[0] else None
-            end = int(values[1]) if values[1] else None
-            if start is None and end is None:
-                return row.src, row.test
-            elif start is None:
-                if version <= end:
-                    return row.src, row.test
-            elif end is None:
-                if version >= start:
-                    return row.src, row.test
-            else:
-                if start <= version <= end:
-                    return row.src, row.test
-        else:
-            if value == version:
-                return row.src, row.test
-
-    return SRC_FOLDER, TEST_FOLDER
-
-
 def run(args, data, folders):
     print('### Running evaluation ###')
     already_evaluated = set()
@@ -211,7 +175,7 @@ def run(args, data, folders):
             if args.new_faults and (project.id, version) in already_evaluated:
                 print('\t\tSkipping')
                 continue
-            src, test = get_folders(folders, project.id, version)
+            src, test = folders.get_folders(project.id, version)
             failing_tests = get_failing_tests(project.id, version, test)
             try:
                 run_rts(project.id, version, failing_tests, src, test)
@@ -228,7 +192,8 @@ def main():
         os.makedirs(REPOS)
     args = parse_args()
     data = load_data(args)
-    folders = load_folders()
+    folders = utils.folders.Folders(
+        DEFECTS4J_SRC_TEST_CSV, SRC_FOLDER, TEST_FOLDER)
     run(args, data, folders)
 
 

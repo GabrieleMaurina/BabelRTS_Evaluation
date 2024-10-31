@@ -1,10 +1,10 @@
-identifier,version,src,test
-Cli,-29,src/java,src/test
+sut,version,src,test
+Cli,:29,src/java,src/test
 Chart,,source,tests
 Closure,,src,test
-Codec,-10,src/java,src/test
+Codec,:10,src/java,src/test
 Gson,,gson/src/main/java,gson/src/test/java
 JxPath,,src/java,src/test
-Lang,36-,src/java,src/test
-Math,85-,src/java,src/test
+Lang,36:,src/java,src/test
+Math,85:,src/java,src/test
 Mockito,,src,test
