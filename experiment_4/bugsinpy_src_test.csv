@@ -1,1 +1,13 @@
 sut,version,src,test
+ansible,,lib/ansible,test
+luigi,,luigi,test
+matplotlib,,lib/matplotlib,lib/matplotlib/tests
+pandas,,pandas,pandas/tests
+PySnooper,,pysnooper,tests
+sanic,,sanic,tests
+scrapy,,scrapy,tests
+spacy,,spacy,spacy/tests
+thefuck,,thefuck,tests
+tornado,,tornado,tornado/test
+tqdm,,tqdm,tqdm/tests
+youtube-dl,,youtube_dl,test

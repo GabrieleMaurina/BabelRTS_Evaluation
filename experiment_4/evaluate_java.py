@@ -13,13 +13,14 @@ import traceback
 
 import babelrts
 import utils.folders
+import utils.results
 
 
 DIR = os.path.normpath(os.path.dirname(__file__))
 DEFECTS4J_CSV = os.path.join(DIR, 'defects4j.csv')
-DEFECTS4J_SRC_TEST_CSV = os.path.join(DIR, 'defects4j_src_test.csv')
+SRC_TEST_CSV = os.path.join(DIR, 'defects4j_src_test.csv')
 RESULTS = os.path.join(DIR, 'results')
-DEFECTS4J_RESULTS_CSV = os.path.join(RESULTS, 'defects4j_results.csv')
+RESULTS_CSV = os.path.join(RESULTS, 'defects4j_results.csv')
 REPOS = os.path.join(DIR, 'repos')
 TMP_DIR = os.path.join(REPOS, 'tmp')
 CACHE_DIR = os.path.join(REPOS, 'cache')
@@ -113,23 +114,6 @@ def load_cache():
     delete_cache()
 
 
-def store_results(id, version, detected, tot_time, test_suite_reduction):
-    if os.path.isfile(DEFECTS4J_RESULTS_CSV):
-        results = pandas.read_csv(DEFECTS4J_RESULTS_CSV)
-        results.loc[-1] = [id, version, detected,
-                           tot_time, test_suite_reduction]
-        results.drop_duplicates(
-            subset=['id', 'version'], keep='last', inplace=True)
-        results.sort_values(['id', 'version'], inplace=True, ignore_index=True)
-    else:
-        results = pandas.DataFrame({'id': [id],
-                                    'version': [version],
-                                    'detected': [detected],
-                                    'selection_time': [tot_time],
-                                    'test_suite_reduction': [test_suite_reduction]})
-    results.to_csv(DEFECTS4J_RESULTS_CSV, index=False)
-
-
 def check_folders(src, test):
     if not os.path.isdir(os.path.join(TMP_DIR, src)):
         raise FileNotFoundError(f'{src} not found')
@@ -156,18 +140,17 @@ def run_rts(id, version, failing_tests, src, test):
     detected = failing_tests.issubset(selected_tests)
     test_suite_reduction = 1.0 - \
         len(selected_tests) / len(rts.get_change_discoverer().get_test_files())
-    store_results(id, version, detected,
-                  tot_time, test_suite_reduction)
+    utils.results.store_results(RESULTS_CSV, id, version, detected,
+                                tot_time, test_suite_reduction)
     print(f'\t\t{detected}, {tot_time}, {test_suite_reduction}')
 
 
 def run(args, data, folders):
     print('### Running evaluation ###')
     already_evaluated = set()
-    if args.new_faults and os.path.isfile(DEFECTS4J_RESULTS_CSV):
-        results = pandas.read_csv(DEFECTS4J_RESULTS_CSV)
-        for row in results.itertuples():
-            already_evaluated.add((row.id, row.version))
+    if args.new_faults:
+        already_evaluated = utils.results.get_already_evaluated(RESULTS_CSV)
+
     for project in data.itertuples():
         print('Id:', project.id)
         for version in project.versions:
@@ -193,7 +176,7 @@ def main():
     args = parse_args()
     data = load_data(args)
     folders = utils.folders.Folders(
-        DEFECTS4J_SRC_TEST_CSV, SRC_FOLDER, TEST_FOLDER)
+        SRC_TEST_CSV, SRC_FOLDER, TEST_FOLDER)
     run(args, data, folders)
 
 
