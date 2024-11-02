@@ -138,10 +138,12 @@ def run_rts(id, version, failing_tests, src, test):
     tot_time = time.time() - tot_time
     selected_tests = set(selected_tests)
     detected = failing_tests.issubset(selected_tests)
-    test_suite_reduction = 1.0 - \
-        len(selected_tests) / len(rts.get_change_discoverer().get_test_files())
+    tests = rts.get_change_discoverer().get_test_files()
+    sources = rts.get_change_discoverer().get_source_files()
+    test_suite_reduction = 1.0 - len(selected_tests) / len(tests)
+    loc = utils.results.get_loc(TMP_DIR, '.java')
     utils.results.store_results(RESULTS_CSV, id, version, detected,
-                                tot_time, test_suite_reduction)
+                                tot_time, test_suite_reduction, len(sources), len(tests), loc)
     print(f'\t\t{detected}, {tot_time}, {test_suite_reduction}')
 
 
