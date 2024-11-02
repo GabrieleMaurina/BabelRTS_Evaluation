@@ -39,5 +39,5 @@ def get_loc(path, *extensions):
         for file in files:
             if any(file.endswith(ext) for ext in extensions):
                 with open(os.path.join(root, file), 'r') as f:
-                    loc += sum(1 for line in f.readlines() if line.strip())
+                    loc += len(f.readlines())
     return loc

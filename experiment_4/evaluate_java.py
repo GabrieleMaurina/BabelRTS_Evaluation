@@ -14,6 +14,7 @@ import traceback
 import babelrts
 import utils.folders
 import utils.results
+import utils.run_rts
 
 
 DIR = os.path.normpath(os.path.dirname(__file__))
@@ -124,27 +125,13 @@ def check_folders(src, test):
 def run_rts(id, version, failing_tests, src, test):
     checkout(id, version)
     check_folders(src, test)
-    rts = babelrts.BabelRTS(project_folder=TMP_DIR,
-                            sources=src, tests=test, languages='java')
-    rts.rts()
+    babelrts.BabelRTS(project_folder=TMP_DIR, sources=src, tests=test, languages='java').rts()
     store_cache()
     checkout(id, version, True)
     check_folders(src, test)
     load_cache()
-    rts = babelrts.BabelRTS(project_folder=TMP_DIR,
-                            sources=src, tests=test, languages='java')
-    tot_time = time.time()
-    selected_tests = rts.rts()
-    tot_time = time.time() - tot_time
-    selected_tests = set(selected_tests)
-    detected = failing_tests.issubset(selected_tests)
-    tests = rts.get_change_discoverer().get_test_files()
-    sources = rts.get_change_discoverer().get_source_files()
-    test_suite_reduction = 1.0 - len(selected_tests) / len(tests)
-    loc = utils.results.get_loc(TMP_DIR, '.java')
-    utils.results.store_results(RESULTS_CSV, id, version, detected,
-                                tot_time, test_suite_reduction, len(sources), len(tests), loc)
-    print(f'\t\t{detected}, {tot_time}, {test_suite_reduction}')
+    result = utils.run_rts.run_rts(TMP_DIR, src, test, failing_tests, 'java', '.java', id, version, RESULTS_CSV)
+    print(f'\t\t{result}')
 
 
 def run(args, data, folders):

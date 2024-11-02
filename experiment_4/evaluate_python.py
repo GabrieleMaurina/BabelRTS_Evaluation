@@ -77,23 +77,18 @@ def evaluate_fault(fault, folders):
                    cwd=fault['path'], capture_output=True, check=True)
     src, test = folders.get_folders(fault['project'], fault['bug_id'])
     check_folders(fault['path'], src, test)
-    rts = babelrts.BabelRTS(fault['path'], src, test, [], ['python'])
-    rts.rts()
+    babelrts.BabelRTS(fault['path'], src, test, languages='python').rts()
     subprocess.run(['git', 'checkout', fault['fixed_commit']],
                    cwd=fault['path'], capture_output=True, check=True)
-    tot_time = time.time()
-    selected_tests = rts.rts()
-    tot_time = time.time() - tot_time
-    selected_tests = set(selected_tests)
-    detected = fault['test_file'] in selected_tests
-    test_suite_reduction = 1.0 - \
-        len(selected_tests) / len(rts.get_change_discoverer().get_test_files())
-    fault['detected'] = detected
-    fault['time'] = tot_time
-    fault['tsr'] = test_suite_reduction
+    check_folders(fault['path'], src, test)
+    result = utils.run_rts.run_rts(fault['path'], src, test, {fault['test_file']}, 'python', '.py', fault['project'], fault['bug_id'], RESULTS_CSV)
+    fault['detected'] = result[0]
+    fault['time'] = result[1]
+    fault['tsr'] = result[2]
+    fault['sources'] = result[3]
+    fault['tests'] = result[4]
+    fault['loc'] = result[5]
     pprint.pprint(fault)
-    utils.results.store_results(RESULTS_CSV, fault['project'], fault['bug_id'], detected,
-                                tot_time, test_suite_reduction)
 
 
 def main():
