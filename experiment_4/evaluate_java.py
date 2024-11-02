@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import argparse
 import glob
 import os.path
 import pandas
@@ -12,6 +11,7 @@ import traceback
 
 
 import babelrts
+import utils.args
 import utils.folders
 import utils.results
 import utils.run_rts
@@ -61,20 +61,9 @@ def expand_versions(versions):
 def load_data(args):
     data = pandas.read_csv(DEFECTS4J_CSV)
     data['versions'] = data['versions'].apply(expand_versions)
-    if args.identifier:
-        data = data[data['id'].isin(args.identifier)]
+    if args.sut:
+        data = data[data['id'].isin(args.sut)]
     return data
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(
-        description='Evaluate babelrts on defects4j')
-    parser.add_argument('-i', '--identifier', nargs='+',
-                        default=(), help='Project identifier')
-    parser.add_argument('-n', '--new-faults', action='store_true', default=False,
-                        help='Only evaluate new faults')
-    args = parser.parse_args()
-    return args
 
 
 def delete_dir(dir):
@@ -125,12 +114,14 @@ def check_folders(src, test):
 def run_rts(id, version, failing_tests, src, test):
     checkout(id, version)
     check_folders(src, test)
-    babelrts.BabelRTS(project_folder=TMP_DIR, sources=src, tests=test, languages='java').rts()
+    babelrts.BabelRTS(project_folder=TMP_DIR, sources=src,
+                      tests=test, languages='java').rts()
     store_cache()
     checkout(id, version, True)
     check_folders(src, test)
     load_cache()
-    result = utils.run_rts.run_rts(TMP_DIR, src, test, failing_tests, 'java', '.java', id, version, RESULTS_CSV)
+    result = utils.run_rts.run_rts(
+        TMP_DIR, src, test, failing_tests, 'java', '.java', id, version, RESULTS_CSV)
     print(f'\t\t{result}')
 
 
@@ -151,7 +142,7 @@ def run(args, data, folders):
             failing_tests = get_failing_tests(project.id, version, test)
             try:
                 run_rts(project.id, version, failing_tests, src, test)
-            except Exception as e:
+            except Exception:
                 print('\t\t*** ERROR ***')
                 traceback.print_exc()
     delete_tmp()
@@ -162,7 +153,7 @@ def main():
         os.makedirs(RESULTS)
     if not os.path.isdir(REPOS):
         os.makedirs(REPOS)
-    args = parse_args()
+    args = utils.args.parse_args('Defects4J')
     data = load_data(args)
     folders = utils.folders.Folders(
         SRC_TEST_CSV, SRC_FOLDER, TEST_FOLDER)

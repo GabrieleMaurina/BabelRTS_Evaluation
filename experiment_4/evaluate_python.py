@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 
-import babelrts
-import utils.folders
-import utils.results
-
 import configparser
 import os.path
 import pprint
 import subprocess
-import time
+
+import babelrts
+import utils.args
+import utils.run_rts
+import utils.folders
+import utils.results
 
 
 DIR = os.path.abspath(os.path.dirname(__file__))
@@ -32,7 +33,7 @@ def read_config(path):
     return dict(parser.items('DEFAULT'))
 
 
-def get_faults():
+def get_faults(args):
     faults = []
     for root, projects, _ in os.walk(BUGS_IN_PY_DIR):
         for project in projects:
@@ -58,6 +59,12 @@ def get_faults():
                     faults.append(fault)
                 break
         break
+    if args.sut:
+        faults = [fault for fault in faults if fault['project'] in args.sut]
+    if args.new_faults:
+        already_evaluated = utils.results.get_already_evaluated(RESULTS_CSV)
+        faults = [fault for fault in faults if (
+            fault['project'], fault['bug_id']) not in already_evaluated]
     faults.sort(key=lambda x: (x['project'], x['bug_id']))
     return faults
 
@@ -81,7 +88,8 @@ def evaluate_fault(fault, folders):
     subprocess.run(['git', 'checkout', fault['fixed_commit']],
                    cwd=fault['path'], capture_output=True, check=True)
     check_folders(fault['path'], src, test)
-    result = utils.run_rts.run_rts(fault['path'], src, test, {fault['test_file']}, 'python', '.py', fault['project'], fault['bug_id'], RESULTS_CSV)
+    result = utils.run_rts.run_rts(fault['path'], src, test, {
+                                   fault['test_file']}, 'python', '.py', fault['project'], fault['bug_id'], RESULTS_CSV)
     fault['detected'] = result[0]
     fault['time'] = result[1]
     fault['tsr'] = result[2]
@@ -96,13 +104,12 @@ def main():
         os.makedirs(RESULTS)
     if not os.path.isdir(REPOS):
         os.makedirs(REPOS)
+    args = utils.args.parse_args('BugsInPy')
     folders = utils.folders.Folders(
         BUGS_IN_PY_SRC_TEST_CSV, SRC_FOLDER, TEST_FOLDER)
-    already_evaluated = utils.results.get_already_evaluated(RESULTS_CSV)
-    faults = get_faults()
+    faults = get_faults(args)
     for fault in faults:
-        if (fault['project'], fault['bug_id']) not in already_evaluated:
-            evaluate_fault(fault, folders)
+        evaluate_fault(fault, folders)
 
 
 if __name__ == '__main__':
