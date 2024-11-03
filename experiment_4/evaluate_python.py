@@ -54,7 +54,7 @@ def get_faults(args):
                         'bug_id': int(bug),
                         'buggy_commit': info['buggy_commit_id'].strip('"'),
                         'fixed_commit': info['fixed_commit_id'].strip('"'),
-                        'test_file': info['test_file'].strip('"'),
+                        'failing_tests': info['test_file'].strip('"').split(';'),
                     }
                     faults.append(fault)
                 break
@@ -88,8 +88,9 @@ def evaluate_fault(fault, folders):
     subprocess.run(['git', 'checkout', fault['fixed_commit']],
                    cwd=fault['path'], capture_output=True, check=True)
     check_folders(fault['path'], src, test)
-    result = utils.run_rts.run_rts(fault['path'], src, test, {
-                                   fault['test_file']}, 'python', '.py', fault['project'], fault['bug_id'], RESULTS_CSV)
+    failing_tests = set(fault['failing_tests'])
+    result = utils.run_rts.run_rts(fault['path'], src, test, failing_tests,
+                                   'python', '.py', fault['project'], fault['bug_id'], RESULTS_CSV)
     fault['detected'] = result[0]
     fault['time'] = result[1]
     fault['tsr'] = result[2]

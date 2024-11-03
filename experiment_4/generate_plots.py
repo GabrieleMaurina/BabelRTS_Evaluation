@@ -1,4 +1,5 @@
 import glob
+import json
 import matplotlib.pyplot as plt
 import os
 import os.path
@@ -8,6 +9,7 @@ import pandas
 DIR = os.path.dirname(os.path.abspath(__file__))
 RESULTS = os.path.join(DIR, 'results')
 PLOTS = os.path.join(DIR, 'plots')
+STATS_JSON = os.path.join(RESULTS, 'stats.json')
 
 
 NUMBER_COLS = ['selection_time', 'test_suite_reduction',
@@ -30,17 +32,21 @@ def load_results():
 
 def compute_metrics(results):
     for result in results:
-        result['describe'] = result['data'].describe()
+        result['describe'] = result['data'].describe().to_dict()
         tot_detected = result['data']['detected'].sum()
         tot_faults = len(result['data'])
         result['fault_detection_rate'] = round(tot_detected / tot_faults, 2)
+        del result['data']
+
+    with open(STATS_JSON, 'w') as f:
+        json.dump(results, f, indent=4)
 
 
 def make_plot(data, title):
     plt.title('Mean ' + title.replace('_', ' ').title())
     plt.bar([d['name'] for d in data], [d['value']
             for d in data], color=COLORS)
-    plt.savefig(os.path.join(PLOTS, f'{title}.png'))
+    plt.savefig(os.path.join(PLOTS, f'{title}.pdf'))
     plt.close()
 
 
@@ -49,7 +55,7 @@ def make_plots(results):
         data = []
         for result in results:
             name = result['name']
-            value = result['describe'][col].loc['mean']
+            value = result['describe'][col]['mean']
             data.append({
                 'name': name,
                 'value': value
