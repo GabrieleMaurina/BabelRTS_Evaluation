@@ -1,6 +1,7 @@
 import os
 import os.path
 import pandas
+import chardet
 
 
 def store_results(csv_file, sut, bug, detected, tot_time, test_suite_reduction, n_sources, n_tests, loc):
@@ -38,6 +39,9 @@ def get_loc(path, *extensions):
     for root, _, files in os.walk(path):
         for file in files:
             if any(file.endswith(ext) for ext in extensions):
-                with open(os.path.join(root, file), 'r') as f:
-                    loc += len(f.readlines())
+                with open(os.path.join(root, file), 'rb') as f:
+                    data = f.read()
+                    encoding = chardet.detect(data)['encoding']
+                    text = data.decode(encoding)
+                    loc += len(text.splitlines())
     return loc
