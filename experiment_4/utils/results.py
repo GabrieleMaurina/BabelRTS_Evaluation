@@ -42,8 +42,10 @@ def get_loc(path, *extensions):
                 with open(os.path.join(root, file), 'rb') as f:
                     data = f.read()
                     encoding = chardet.detect(data)['encoding']
-                    if encoding is None:
-                        continue
-                    text = data.decode(encoding)
-                    loc += len(text.splitlines())
+                    try:
+                        text = data.decode(encoding)
+                    except Exception:
+                        pass
+                    else:
+                        loc += len(text.splitlines())
     return loc
