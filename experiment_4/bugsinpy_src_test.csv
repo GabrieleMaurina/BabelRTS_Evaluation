@@ -1,5 +1,10 @@
 sut,version,src,test
 ansible,,lib/ansible,test
+black,,,tests
+cookiecutter,,cookiecutter,tests
+fastapi,,fastapi,tests
+httpie,,httpie,tests
+keras,,keras,tests
 luigi,,luigi,test
 matplotlib,,lib/matplotlib,lib/matplotlib/tests
 pandas,,pandas,pandas/tests

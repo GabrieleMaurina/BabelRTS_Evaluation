@@ -6,10 +6,7 @@ class Folders:
         self.file = file
         self.default_src = default_src
         self.default_test = default_test
-        self.data = pandas.read_csv(file, dtype={'version': str})
-        versions = self.data['version']
-        versions = versions.fillna('')
-        self.data['version'] = versions
+        self.data = pandas.read_csv(file, dtype=str, na_filter=False)
         for col in self.data.columns:
             self.data[col] = self.data[col].str.strip()
 
