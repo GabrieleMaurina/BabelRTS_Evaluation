@@ -38,6 +38,8 @@ def compute_metrics(results):
         result['fault_detection_rate'] = round(tot_detected / tot_faults, 2)
         means = result['data'].groupby('sut')[NUMBER_COLS].mean().to_dict()
         result['means'] = {k: tuple(v.values()) for k, v in means.items()}
+        result['n_suts'] = len(result['data']['sut'].unique())
+        result['n_faults'] = len(result['data'])
         del result['data']
 
     with open(STATS_JSON, 'w') as f:
@@ -45,7 +47,7 @@ def compute_metrics(results):
 
 
 def make_bar_plot(data, title):
-    plt.title('Mean ' + title.replace('_', ' ').title())
+    plt.title(title.replace('_', ' ').title())
     plt.bar([d['name'] for d in data], [d['value']
             for d in data], color=COLORS)
     plt.savefig(os.path.join(PLOTS, f'{title}_bar.pdf'))
@@ -81,10 +83,14 @@ def make_plots(results):
                 'name': name,
                 'value': result['means'][col]
             })
-        make_bar_plot(data, col)
+        make_bar_plot(data, 'mean_' + col)
         make_box_plot(box_data, col)
     make_bar_plot([{'name': r['name'], 'value': r['fault_detection_rate']}
                    for r in results], 'fault_detection_rate')
+    make_bar_plot([{'name': r['name'], 'value': r['n_suts']}
+                   for r in results], 'n_suts')
+    make_bar_plot([{'name': r['name'], 'value': r['n_faults']}
+                   for r in results], 'n_faults')
 
 
 def main():
