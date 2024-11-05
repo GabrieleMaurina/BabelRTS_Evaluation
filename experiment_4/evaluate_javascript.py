@@ -75,7 +75,8 @@ def run(args, faults, folders):
         checkout(fault['path'], f'Bug-{fault["bug_id"]}-test')
         src, test = folders.get_folders(fault['project'], fault['bug_id'])
         check_folders(fault['path'], src, test)
-        babelrts.BabelRTS(fault['path'], src, test, languages='python').rts()
+        babelrts.BabelRTS(fault['path'], src, test,
+                          languages='javascript').rts()
         checkout(fault['path'], f'Bug-{fault["bug_id"]}-full')
         check_folders(fault['path'], src, test)
         result = utils.run_rts.run_rts(fault['path'], src, test, fault['failing_tests'],
