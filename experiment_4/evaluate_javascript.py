@@ -21,7 +21,7 @@ RESULTS = os.path.join(DIR, 'results')
 RESULTS_CSV = os.path.join(RESULTS, 'bugsjs_results.csv')
 REPOS = os.path.join(DIR, 'repos')
 
-SRC_FOLDER = 'lib'
+SRC_FOLDER = '.'
 TEST_FOLDER = 'test'
 
 
@@ -43,7 +43,7 @@ def get_faults(args):
 
 
 def get_failing_tests(fault):
-    cmd = f'git --no-pager diff --name-only Bug-{fault["bug_id"]} Bug-{fault["bug_id"]}-test'
+    cmd = f'git --no-pager diff --name-only --diff-filter=AM Bug-{fault["bug_id"]} Bug-{fault["bug_id"]}-test'
     files = subprocess.run(
         cmd, shell=True, cwd=fault['path'], check=True, capture_output=True, text=True).stdout
     return set(files.split())
@@ -79,8 +79,11 @@ def run(args, faults, folders):
                           languages='javascript').rts()
         checkout(fault['path'], f'Bug-{fault["bug_id"]}-full')
         check_folders(fault['path'], src, test)
+        test_regexp = None
+        if fault['project'] == 'Shields':
+            test_regexp = r'^.+\.spec\.js$'
         result = utils.run_rts.run_rts(fault['path'], src, test, fault['failing_tests'],
-                                       'javascript', '.js', fault['project'], fault['bug_id'], RESULTS_CSV)
+                                       'javascript', '.js', fault['project'], fault['bug_id'], RESULTS_CSV, test_regexp)
         fault['detected'] = result[0]
         fault['time'] = result[1]
         fault['tsr'] = result[2]

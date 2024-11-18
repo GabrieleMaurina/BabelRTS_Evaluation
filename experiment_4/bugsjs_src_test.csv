@@ -1,4 +1,3 @@
 sut,version,src,test
-Express,,,test
-Shields,,lib,lib
-Eslint,,lib,tests
+Shields,,,
+Eslint,,,tests

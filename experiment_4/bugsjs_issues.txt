@@ -1,0 +1,3 @@
+Bower, test/helpers.js has dynamic imports
+Karma, test/unit/reporter.spec.js has dynamic import with mock library
+Pencilblue, include/requirements.js has dynamic imports
