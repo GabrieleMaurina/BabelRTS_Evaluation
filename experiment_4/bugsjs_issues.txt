@@ -1,3 +1,4 @@
 Bower, test/helpers.js has dynamic imports
+Elint, tests/bin/eslint.js has a process fork
 Karma, test/unit/reporter.spec.js has dynamic import with mock library
 Pencilblue, include/requirements.js has dynamic imports

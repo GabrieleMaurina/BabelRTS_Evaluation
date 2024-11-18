@@ -5,13 +5,14 @@ import utils.results
 import time
 
 
-def run_rts(project_folder, src_folder, test_folder, failing_tests, language, extension, sut, bug, results_csv, test_regexp=None):
+def run_rts(project_folder, src_folder, test_folder, failing_tests, language, extension, sut, bug, results_csv, test_regexp=None, language_implementations=None):
     loc = utils.results.get_loc(project_folder, extension)
     rts = babelrts.BabelRTS(project_folder,
                             src_folder,
                             test_folder,
                             languages=language,
-                            test_regexp=test_regexp)
+                            test_regexp=test_regexp,
+                            language_implementations=language_implementations)
     tot_time = time.time()
     selected_tests = rts.rts()
     tot_time = time.time() - tot_time
@@ -34,4 +35,11 @@ def run_rts(project_folder, src_folder, test_folder, failing_tests, language, ex
                                 tot_sources,
                                 tot_tests,
                                 loc)
+    # print(selected_tests)
+    # print(rts.get_change_discoverer().get_changed_files())
+    # deps = rts.get_dependency_extractor().get_dependencies()
+    # deps = {k: tuple(v) for k, v in deps.items()}
+    # import json
+    # with open('deps.json', 'w') as f:
+    #     json.dump(deps, f, indent=4)
     return detected, tot_time, test_suite_reduction, tot_sources, tot_tests, loc

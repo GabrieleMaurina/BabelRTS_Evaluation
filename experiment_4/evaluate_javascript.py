@@ -11,6 +11,7 @@ import utils.args
 import utils.folders
 import utils.results
 import utils.run_rts
+import utils.js_implementations
 
 
 DIR = os.path.normpath(os.path.dirname(__file__))
@@ -23,6 +24,11 @@ REPOS = os.path.join(DIR, 'repos')
 
 SRC_FOLDER = '.'
 TEST_FOLDER = 'test'
+
+
+TEST_REG_EXPS = {
+    'Shields': r'^.+\.spec\.js$',
+}
 
 
 def get_faults(args):
@@ -79,11 +85,11 @@ def run(args, faults, folders):
                           languages='javascript').rts()
         checkout(fault['path'], f'Bug-{fault["bug_id"]}-full')
         check_folders(fault['path'], src, test)
-        test_regexp = None
-        if fault['project'] == 'Shields':
-            test_regexp = r'^.+\.spec\.js$'
+        test_regexp = TEST_REG_EXPS.get(fault['project'])
+        language_implementations = utils.js_implementations.LANGUAGE_IMPLEMENTATIONS.get(
+            fault['project'])
         result = utils.run_rts.run_rts(fault['path'], src, test, fault['failing_tests'],
-                                       'javascript', '.js', fault['project'], fault['bug_id'], RESULTS_CSV, test_regexp)
+                                       'javascript', '.js', fault['project'], fault['bug_id'], RESULTS_CSV, test_regexp, language_implementations)
         fault['detected'] = result[0]
         fault['time'] = result[1]
         fault['tsr'] = result[2]
