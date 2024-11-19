@@ -19,11 +19,17 @@ class Bower(javascript.Javascript):
 
 
 ESLINT_RESOLVE = re.compile(r"resolve\s*\(\s*`\${__dirname}\/(.+?)`\)")
+ESLINT_COMPACT_REQUIRE = re.compile(r'compatRequire\s*\(\s*"(.*?)"')
+ESLINT_PROXYQUIRE = re.compile(r'proxyquire\s*\(\s*"(.*?)"')
 
 
 class Eslint(javascript.Javascript):
     def get_extensions_patterns_actions(self):
-        return super().get_extensions_patterns_actions() + (ExtensionPatternAction('js', ESLINT_RESOLVE, self.import_action), )
+        return super().get_extensions_patterns_actions() + (
+            ExtensionPatternAction('js', ESLINT_RESOLVE, self.import_action),
+            ExtensionPatternAction(
+                'js', ESLINT_COMPACT_REQUIRE, self.import_action),
+            ExtensionPatternAction('js', ESLINT_PROXYQUIRE, self.import_action))
 
 
 KARMA_LOAD_FILE = re.compile(r"loadFile\s*\(.*?'\/(.+?)'")
@@ -32,7 +38,9 @@ KARMA_PROXYQUIRE = re.compile(r"proxyquire\s*\(\s*'(.*?)'")
 
 class Karma(javascript.Javascript):
     def get_extensions_patterns_actions(self):
-        return super().get_extensions_patterns_actions() + (ExtensionPatternAction('js', KARMA_LOAD_FILE, self.import_action), ExtensionPatternAction('js', KARMA_PROXYQUIRE, self.import_action))
+        return super().get_extensions_patterns_actions() + (
+            ExtensionPatternAction('js', KARMA_LOAD_FILE, self.import_action),
+            ExtensionPatternAction('js', KARMA_PROXYQUIRE, self.import_action))
 
 
 PENCILBLUE_IMPORT = re.compile(r"require\s*\(.+?'\/(.+?)'")

@@ -27,6 +27,7 @@ TEST_FOLDER = 'test'
 
 
 TEST_REG_EXPS = {
+    'Eslint': r'^(?!tests\/fixtures\/).*$',
     'Shields': r'^.+\.spec\.js$',
 }
 
