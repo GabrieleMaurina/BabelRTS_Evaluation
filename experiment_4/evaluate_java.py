@@ -15,6 +15,7 @@ import utils.args
 import utils.folders
 import utils.results
 import utils.run_rts
+import utils.java_implementations
 
 
 DIR = os.path.normpath(os.path.dirname(__file__))
@@ -120,8 +121,11 @@ def run_rts(id, version, failing_tests, src, test):
     checkout(id, version, True)
     check_folders(src, test)
     load_cache()
+
+    language_implementations = utils.java_implementations.LANGUAGE_IMPLEMENTATIONS.get(
+        id)
     result = utils.run_rts.run_rts(
-        TMP_DIR, src, test, failing_tests, 'java', '.java', id, version, RESULTS_CSV)
+        TMP_DIR, src, test, failing_tests, 'java', '.java', id, version, RESULTS_CSV, None, language_implementations)
     print(result)
 
 

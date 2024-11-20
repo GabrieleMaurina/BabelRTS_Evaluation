@@ -37,6 +37,7 @@ def run_rts(project_folder, src_folder, test_folder, failing_tests, language, ex
                                 loc)
     # print(selected_tests)
     # print(rts.get_change_discoverer().get_changed_files())
+    # print(failing_tests)
     # deps = rts.get_dependency_extractor().get_dependencies()
     # deps = {k: tuple(v) for k, v in deps.items()}
     # import json
