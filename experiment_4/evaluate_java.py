@@ -122,7 +122,7 @@ def run_rts(id, version, failing_tests, src, test):
     load_cache()
     result = utils.run_rts.run_rts(
         TMP_DIR, src, test, failing_tests, 'java', '.java', id, version, RESULTS_CSV)
-    print(f'\t\t{result}')
+    print(result)
 
 
 def run(args, data, folders):
@@ -132,20 +132,18 @@ def run(args, data, folders):
         already_evaluated = utils.results.get_already_evaluated(RESULTS_CSV)
 
     for project in data.itertuples():
-        print('Id:', project.id)
         for version in project.versions:
-            print('\tFault:', version)
             if args.new_faults and (project.id, version) in already_evaluated:
-                print('\t\tSkipping')
                 continue
+            print(project.id, version)
             src, test = folders.get_folders(project.id, version)
             failing_tests = get_failing_tests(project.id, version, test)
             try:
                 run_rts(project.id, version, failing_tests, src, test)
             except Exception:
-                print('\t\t*** ERROR ***')
+                print('*** ERROR ***')
                 traceback.print_exc()
-    delete_tmp()
+    # delete_tmp()
 
 
 def main():
