@@ -40,8 +40,10 @@ def compute_metrics(results):
         result['means'] = {k: tuple(v.values()) for k, v in means.items()}
         result['n_suts'] = len(result['data']['sut'].unique())
         result['n_faults'] = len(result['data'])
+        result['tot_loc'] = int(result['data']['loc'].sum())
+        result['tot_files'] = int(result['data']['n_sources'].sum()) + \
+            int(result['data']['n_tests'].sum())
         del result['data']
-
     with open(STATS_JSON, 'w') as f:
         json.dump(results, f, indent=4)
 
