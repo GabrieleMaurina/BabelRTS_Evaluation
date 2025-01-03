@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 
+import json
 import babelrts
+import googletest
 import mochiweb
+import graphql
+import faker
 import os.path
 import pandas
 import subprocess
@@ -22,11 +26,16 @@ RESULTS_FILE = os.path.join(RESULTS_DIR, 'time_reduction.csv')
 BABELRTS_CACHE = '.babelrts'
 
 
-SUTS = [mochiweb.Mochiweb()]
+SUTS = [mochiweb.Mochiweb(), graphql.Graphql(), faker.Faker(), googletest.GoogleTest()]
+SUTS = [googletest.GoogleTest()]
 
 
 def get_first_commit(sut):
-    path = os.path.join(RESULTS_DIR, f'{sut.language}_results.csv')
+    if isinstance(sut.language, str):
+        name = f'{sut.language}_results.csv'
+    else:
+        name = '_'.join(sut.language) + '_results.csv'
+    path = os.path.join(RESULTS_DIR, name)
     with open(path, 'r') as f:
         for line in f:
             if line.startswith(sut.name):
@@ -34,7 +43,11 @@ def get_first_commit(sut):
 
 
 def get_src_test(sut):
-    path = os.path.join(SUBJECTS_DIR, f'{sut.language}_subjects.csv')
+    if isinstance(sut.language, str):
+        name = f'{sut.language}_subjects.csv'
+    else:
+        name = '_'.join(sut.language) + '_subjects.csv'
+    path = os.path.join(SUBJECTS_DIR, name)
     with open(path, 'r') as f:
         for line in f:
             line = line.strip()
@@ -50,6 +63,8 @@ def get_all_commits(sut):
 
 def checkout_commit(commit, sut):
     subprocess.run(['git', 'clean', '-fd'], cwd=sut.path,
+                   check=True, capture_output=True)
+    subprocess.run(['git', 'reset', '--hard'], cwd=sut.path,
                    check=True, capture_output=True)
     subprocess.run(['git', 'checkout', '-f', commit], cwd=sut.path,
                    check=True, capture_output=True)
@@ -71,27 +86,38 @@ def save_results(sut, avg_time_retest_all, avg_time_rts, avg_time_reduction):
     results.to_csv(RESULTS_FILE, index=False)
 
 
+def read_babelrts_cache(sut):
+    with open(os.path.join(sut.path, BABELRTS_CACHE), 'r') as f:
+        return json.load(f)
+    
+
+def write_babelrts_cache(sut, cache):
+    with open(os.path.join(sut.path, BABELRTS_CACHE), 'w') as f:
+        json.dump(cache, f, indent=4)
+
+
 def process_sut(sut):
     first_commit = get_first_commit(sut)
     src, test = get_src_test(sut)
     checkout_commit(first_commit, sut)
     commits = get_all_commits(sut)
     results = {'time_retest_all': [], 'time_rts': [], 'time_reduction': []}
+    cache = {}
     for index, commit in enumerate(commits):
         checkout_commit(commit, sut)
+        sut.build()
         if index == 0:
-            babelrts_cache = os.path.join(sut.path, BABELRTS_CACHE)
-            if os.path.isfile(babelrts_cache):
-                os.remove(babelrts_cache)
-            babelRTS = babelrts.BabelRTS(
-                sut.path, src, test, languages=sut.language)
+            babelrts.BabelRTS(sut.path, src, test, languages=sut.language).rts()
+            cache = read_babelrts_cache(sut)
             continue
         time_run_all = sut.run_all_tests()
         babelRTS = babelrts.BabelRTS(
             sut.path, src, test, languages=sut.language)
+        write_babelrts_cache(sut, cache)
         start = time.time()
         selected_tests = babelRTS.rts()
         end = time.time()
+        cache = read_babelrts_cache(sut)
         time_rts = end - start + sut.run_tests(selected_tests)
         time_reduction = (time_run_all - time_rts) / time_run_all
         results['time_retest_all'].append(time_run_all)

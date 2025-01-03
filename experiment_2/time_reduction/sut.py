@@ -22,6 +22,9 @@ class SUT(abc.ABC):
     def language(self):
         pass
 
+    def build(self):
+        pass
+
     @abc.abstractmethod
     def run_all_tests(self):
         pass
