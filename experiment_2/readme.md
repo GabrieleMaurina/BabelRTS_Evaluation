@@ -16,3 +16,5 @@ included in folder results and plots.
 ### Additional Notes
 In this folder we have also included all the plots (folder plots) and tables
 (folder tables) that didn't find space in the paper.
+
+We have not included the code to compute the time reduction because it is not been cleaned and standardized yet. Please contact the authors if you are interested in this code.

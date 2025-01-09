@@ -6,6 +6,12 @@ included in this folder.
 
 ### Run the Experiment
 
+* install defects4j https://github.com/rjust/defects4j
+
+* clone BugsInPy into this folder https://github.com/soarsmu/BugsInPy
+
+* clone BugsJS into this folder https://github.com/BugsJS/bug-dataset
+
 * to evaluate fault detection on Java SUTs
     ```bash
     python3 evaluate_java.py
@@ -21,6 +27,7 @@ included in this folder.
     python3 evaluate_javascript.py
     ```
 
-### Additional Notes
-In the folder results, you can also find the results for the 1,000 commits
-execution we only mentioned in the paper but we couldn't add for lack of space.
+* to generate the plots
+    ```bash
+    python3 generate_plots.py
+    ```

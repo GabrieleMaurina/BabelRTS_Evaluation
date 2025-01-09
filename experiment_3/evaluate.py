@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
 
-from sys import path
-path.append('..')
 from babelrts import BabelRTS
 from babelrts.components.dependency_extractor import LANGUAGE_IMPLEMENTATIONS
 
