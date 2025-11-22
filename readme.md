@@ -21,7 +21,7 @@ https://ieeexplore.ieee.org/document/10944548
 The implementation of BabelRTS is availabe at this repository:
 https://github.com/GabrieleMaurina/BabelRTS
 
-The replication package included in the paper is available here:
+The original replication package included in the paper is available here:
 https://doi.org/10.5281/zenodo.14627004
 
 ### Demo
